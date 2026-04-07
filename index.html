@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Online Devasa Şehir ve Yarış Oyunu V14</title>
+    <title>Online Devasa Şehir ve Yarış Oyunu V15</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background-color: #111; overflow: hidden; font-family: 'Segoe UI', Tahoma, sans-serif; user-select: none; touch-action: none; }
@@ -26,7 +26,8 @@
         #ui { position: absolute; top: 20px; left: 20px; color: white; font-size: 24px; font-weight: bold; text-shadow: 2px 2px 0 #000; display: none; z-index: 5; pointer-events: none;}
         #checkpoint-ui { position: absolute; top: 20px; right: 20px; color: #ff3333; font-size: 28px; font-weight: bold; text-shadow: 2px 2px 0 #000; display: none; z-index: 5; }
         
-        #leaderboard-ui { position: absolute; top: 80px; right: 20px; background: rgba(0,0,0,0.85); color: white; padding: 15px; border-radius: 8px; border: 2px solid #ff3333; display: none; z-index: 5; font-size: 18px; min-width: 220px; box-shadow: 4px 4px 0 rgba(0,0,0,0.5); }
+        /* CANLI SIRALAMA (Mobilde Tıklamaları Engellememesi İçin pointer-events: none eklendi) */
+        #leaderboard-ui { position: absolute; top: 80px; right: 20px; background: rgba(0,0,0,0.85); color: white; padding: 15px; border-radius: 8px; border: 2px solid #ff3333; display: none; z-index: 5; font-size: 18px; min-width: 220px; box-shadow: 4px 4px 0 rgba(0,0,0,0.5); pointer-events: none; }
         #leaderboard-ui h3 { margin: 0 0 10px 0; color: #00ffcc; text-align: center; font-size: 22px; border-bottom: 2px solid #444; padding-bottom: 5px; }
         #leaderboard-list div { padding: 5px 0; font-weight: bold; }
 
@@ -41,24 +42,35 @@
         
         #invite-popup { display: none; position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background: #ff3333; padding: 20px; border-radius: 10px; z-index: 30; text-align: center; color: white; font-weight: bold; font-size: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); border: 2px solid white; }
 
-        /* YENİ MOBİL KONTROLLER (JOYSTICK) */
+        /* YENİ MOBİL KONTROLLER (Araları Açık ve Büyük Tuşlar) */
         #mobile-toggle-btn { position: absolute; bottom: 20px; right: 20px; background: #ff3333; border: 3px solid white; color: white; border-radius: 50%; width: 70px; height: 70px; font-size: 30px; display: none; z-index: 40; justify-content: center; align-items: center; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
         #mobile-controls { display: none; position: absolute; bottom: 0; left: 0; width: 100%; height: 100%; z-index: 35; pointer-events: none; }
         
-        /* Joystick Alanı */
-        #joystick-zone { position: absolute; bottom: 40px; left: 40px; width: 160px; height: 160px; background: rgba(255,255,255,0.1); border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; pointer-events: auto; display: flex; justify-content: center; align-items: center; }
-        #joystick-stick { width: 70px; height: 70px; background: #ff3333; border: 2px solid white; border-radius: 50%; box-shadow: 0 0 15px rgba(0,0,0,0.5); pointer-events: none; transform: translate(0px, 0px); transition: 0.1s transform ease-out; }
-
-        /* Aksiyon Butonları Alanı */
-        .mc-actions { position: absolute; bottom: 20px; right: 20px; width: 180px; height: 180px; pointer-events: auto; }
-        .mc-btn { position: absolute; width: 55px; height: 55px; background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.6); border-radius: 10px; color: white; font-weight: bold; display: flex; justify-content: center; align-items: center; font-size: 20px; user-select: none; }
+        .mc-dpad { position: absolute; bottom: 20px; left: 20px; width: 220px; height: 220px; pointer-events: auto; }
+        .mc-actions { position: absolute; bottom: 20px; right: 20px; width: 220px; height: 220px; pointer-events: auto; }
+        .mc-btn { position: absolute; width: 65px; height: 65px; background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.6); border-radius: 12px; color: white; font-weight: bold; display: flex; justify-content: center; align-items: center; font-size: 24px; user-select: none; }
         .mc-btn:active { background: rgba(255,50,50,0.5); }
         
-        #btn-space { bottom: 0; left: 0; width: 80px; height: 80px; border-radius: 50%; font-size: 16px; border: 3px solid #ffaa00; background: rgba(255, 170, 0, 0.2); }
+        /* D-Pad Yerleşimi (Aralar Açıldı) */
+        #btn-w { top: 0; left: 77.5px; }
+        #btn-s { bottom: 0; left: 77.5px; }
+        #btn-a { top: 77.5px; left: 0; }
+        #btn-d { top: 77.5px; right: 0; }
+
+        /* Aksiyon Butonları */
+        #btn-space { bottom: 0; left: 0; width: 90px; height: 90px; border-radius: 50%; font-size: 18px; border: 3px solid #ffaa00; background: rgba(255, 170, 0, 0.2); }
         #btn-space:active { background: rgba(255, 170, 0, 0.6); }
         #btn-e { top: 0; right: 0; background: rgba(0,255,200,0.3); }
         #btn-r { top: 0; left: 0; background: rgba(255,0,255,0.3); }
         #btn-m { bottom: 0; right: 0; background: rgba(100,100,255,0.3); }
+
+        /* Mobil Ekranlar İçin UI Küçültme */
+        @media (max-width: 800px) {
+            #leaderboard-ui { top: 10px; right: 10px; font-size: 14px; min-width: 150px; padding: 10px; }
+            #leaderboard-ui h3 { font-size: 16px; margin-bottom: 5px; }
+            #checkpoint-ui { font-size: 20px; top: 10px; }
+            #ui { font-size: 16px; top: 10px; left: 10px; }
+        }
     </style>
 </head>
 <body>
@@ -133,9 +145,11 @@
     <!-- MOBİL KONTROLLER -->
     <div id="mobile-toggle-btn" onclick="toggleMobileControls()">📱</div>
     <div id="mobile-controls">
-        <!-- Dokunmatik Joystick -->
-        <div id="joystick-zone">
-            <div id="joystick-stick"></div>
+        <div class="mc-dpad">
+            <div id="btn-w" class="mc-btn">W</div>
+            <div id="btn-s" class="mc-btn">S</div>
+            <div id="btn-a" class="mc-btn">A</div>
+            <div id="btn-d" class="mc-btn">D</div>
         </div>
         
         <div class="mc-actions">
@@ -204,7 +218,7 @@
             if(keys.hasOwnProperty(key)) keys[key] = false; 
         });
 
-        // --- GELİŞMİŞ MOBİL JOYSTICK VE BUTON SİSTEMİ ---
+        // --- MOBİL TUŞLAR (W,A,S,D Geri Döndü) ---
         function toggleMobileControls() {
             let mc = document.getElementById('mobile-controls');
             mc.style.display = (mc.style.display === 'block') ? 'none' : 'block';
@@ -214,63 +228,20 @@
             const bindTouch = (id, keyChar) => {
                 let el = document.getElementById(id);
                 if(!el) return;
-                el.addEventListener('touchstart', (e) => { e.preventDefault(); keys[keyChar] = true; if(keyChar==='m') showMinimap = !showMinimap; if(keyChar==='r') openRaceMenu(); }, {passive: false});
+                el.addEventListener('touchstart', (e) => { 
+                    e.preventDefault(); 
+                    keys[keyChar] = true; 
+                    if(keyChar==='m') showMinimap = !showMinimap; 
+                    if(keyChar==='r') openRaceMenu(); 
+                }, {passive: false});
                 el.addEventListener('touchend', (e) => { e.preventDefault(); keys[keyChar] = false; }, {passive: false});
+                el.addEventListener('touchcancel', (e) => { e.preventDefault(); keys[keyChar] = false; }, {passive: false});
             };
+            
+            bindTouch('btn-w', 'w'); bindTouch('btn-s', 's');
+            bindTouch('btn-a', 'a'); bindTouch('btn-d', 'd');
             bindTouch('btn-space', ' '); bindTouch('btn-e', 'e');
             bindTouch('btn-r', 'r'); bindTouch('btn-m', 'm');
-            
-            // Joystick Mantığı
-            const zone = document.getElementById('joystick-zone');
-            const stick = document.getElementById('joystick-stick');
-            let stickActive = false;
-            let zoneRect = null;
-
-            zone.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                stickActive = true;
-                zoneRect = zone.getBoundingClientRect();
-                stick.style.transition = 'none';
-                handleJoy(e.touches[0]);
-            }, {passive: false});
-
-            zone.addEventListener('touchmove', (e) => {
-                e.preventDefault();
-                if(!stickActive) return;
-                handleJoy(e.touches[0]);
-            }, {passive: false});
-
-            const resetJoy = (e) => {
-                e.preventDefault();
-                stickActive = false;
-                stick.style.transition = '0.1s transform ease-out';
-                stick.style.transform = `translate(0px, 0px)`;
-                keys.w = false; keys.s = false; keys.a = false; keys.d = false;
-            };
-            zone.addEventListener('touchend', resetJoy, {passive: false});
-            zone.addEventListener('touchcancel', resetJoy, {passive: false});
-
-            function handleJoy(touch) {
-                let centerX = zoneRect.left + zoneRect.width/2;
-                let centerY = zoneRect.top + zoneRect.height/2;
-                let dx = touch.clientX - centerX;
-                let dy = touch.clientY - centerY;
-                let maxDist = zoneRect.width/2 - 35; // Çubuğun çıkabileceği max sınır
-                
-                let dist = Math.hypot(dx, dy);
-                if(dist > maxDist) {
-                    dx = (dx / dist) * maxDist;
-                    dy = (dy / dist) * maxDist;
-                }
-                stick.style.transform = `translate(${dx}px, ${dy}px)`;
-
-                // Joystick konumunu tuşlara dönüştür
-                let thresh = 15;
-                keys.w = dy < -thresh;
-                keys.s = dy > thresh;
-                keys.a = dx < -thresh;
-                keys.d = dx > thresh;
-            }
 
             if(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
                 document.getElementById('mobile-toggle-btn').style.display = 'flex';
@@ -315,7 +286,12 @@
             constructor(x, y, isBot = false) {
                 this.x = x; this.y = y; this.width = 44; this.height = 88;
                 this.angle = -Math.PI / 2; this.speed = 0; this.isBot = isBot;
-                this.maxSpeed = 15; this.acceleration = 0.25; this.friction = 0.95; 
+                
+                // --- HIZ DEĞERLERİ ARTIRILDI ---
+                this.maxSpeed = 9.1; // * 11 = 100 km/h yapar
+                this.acceleration = 0.5; // Hızlanma çok daha iyi
+                this.friction = 0.95; 
+                
                 this.velX = 0; this.velY = 0; this.img = null;
                 this.inRace = false; this.cpIndex = 0; this.targetAngle = this.angle;
                 this.mistakeProb = isBot ? (0.01 + Math.random() * 0.05) : 0;
@@ -371,16 +347,21 @@
             let enginePower = 0;
             if (keys.w) enginePower = this.acceleration;
             if (keys.s) enginePower = -this.acceleration * 0.9; 
-            this.speed += enginePower; this.speed *= this.friction; 
+            
+            this.speed += enginePower; 
+            this.speed *= this.friction; 
+            
             if (this.speed > this.maxSpeed) this.speed = this.maxSpeed;
             if (this.speed < -this.maxSpeed * 0.4) this.speed = -this.maxSpeed * 0.4; 
-            let baseTurnSpeed = 0.055;
+            
+            let baseTurnSpeed = 0.065; // Dönüşler biraz daha keskinleştirildi
             if(Math.abs(this.speed) > 0.5) {
                 let dir = this.speed > 0 ? 1 : -1;
                 let turnSpeed = baseTurnSpeed * (1 - (Math.abs(this.speed) / (this.maxSpeed * 2.5)));
                 if (keys.a) this.angle -= turnSpeed * dir;
                 if (keys.d) this.angle += turnSpeed * dir;
             }
+            
             let grip = keys[' '] ? 0.85 : 0.96; 
             let targetVelX = Math.cos(this.angle) * this.speed; let targetVelY = Math.sin(this.angle) * this.speed;
             this.velX = (this.velX * (1 - grip)) + (targetVelX * grip); this.velY = (this.velY * (1 - grip)) + (targetVelY * grip);
@@ -407,7 +388,8 @@
             bot.update = function() {
                 if (gameState === 'pre_race') return;
                 if (this.inRace && gameState === 'racing') {
-                    const botMaxRaceSpeed = player.maxSpeed * 0.20; 
+                    // BOT YARIŞ HIZI GÜNCELLENDİ
+                    const botMaxRaceSpeed = player.maxSpeed * 0.95; 
                     let targetCP = currentRace.route[this.cpIndex];
                     if (targetCP) {
                         let dx = targetCP.x - this.x; let dy = targetCP.y - this.y;
@@ -654,21 +636,18 @@
             ctx.fillText(name, x, y - 42);
         }
 
-        // --- FIXED TIMESTEP EKLENDİ (Her Ekranda Aynı Hız) ---
         let lastTime = 0;
         let accumulator = 0;
-        const timeStep = 1000 / 60; // Saniyede tam 60 hesaplama!
+        const timeStep = 1000 / 60;
 
         function gameLoop(timestamp) {
             if (!lastTime) lastTime = timestamp;
             let dt = timestamp - lastTime;
             lastTime = timestamp;
             
-            // Eğer sekme arka planda kalırsa oyun sapıtmasın diye sınır koyuyoruz
             if (dt > 100) dt = 100; 
             accumulator += dt;
 
-            // FİZİK VE OYUN MANTIĞI (Hz'den bağımsız, saniyede 60 kez çalışır)
             while (accumulator >= timeStep) {
                 if (gameState === 'freeroam' || gameState === 'pre_race' || gameState === 'racing' || gameState === 'post_race') {
                     player.update();
@@ -696,7 +675,6 @@
                 accumulator -= timeStep;
             }
 
-            // ÇİZİM (Monitörün Hz hızında çalışır, oyun akıcı görünür)
             if (gameState === 'freeroam' || gameState === 'pre_race' || gameState === 'racing' || gameState === 'post_race') {
                 camera.x = player.x - canvas.width / 2; camera.y = player.y - canvas.height / 2;
 
@@ -893,7 +871,7 @@
         }
 
         window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
-        requestAnimationFrame(gameLoop); // İLK ÇAĞRI DÜZELTİLDİ
+        requestAnimationFrame(gameLoop); 
     </script>
 </body>
 </html>
