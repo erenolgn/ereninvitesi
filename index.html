@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Online Devasa Şehir ve Yarış Oyunu V17</title>
+    <title>Online Devasa Şehir ve Yarış Oyunu V18</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background-color: #111; overflow: hidden; font-family: 'Segoe UI', Tahoma, sans-serif; user-select: none; touch-action: none; -webkit-user-select: none; -webkit-touch-callout: none; }
@@ -212,8 +212,9 @@
         carImagesNames.forEach(name => loadImage(name, 'car'));
         buildingNames.forEach(name => loadImage(name, 'building'));
         
-        // Gizli Aracın oyunda gözükebilmesi için herkes tarafından sisteme tanıtılması lazım
+        // Gizli Araçların oyunda gözükebilmesi için sisteme tanıtılması
         loadImage('araba0.png', 'car');
+        loadImage('araba00.png', 'car'); // YENİ BOSS ARACI
 
         let playerName = "Sürücü";
         let gameState = 'auth'; 
@@ -241,7 +242,6 @@
                 if (cheatScreen.style.display === 'none' || cheatScreen.style.display === '') {
                     cheatScreen.style.display = 'block';
                     document.getElementById('cheat-input').focus();
-                    // Yazı yazarken araç hareket etmesin diye tuşları sıfırla
                     keys.w = false; keys.a = false; keys.s = false; keys.d = false; keys[' '] = false;
                 } else {
                     cheatScreen.style.display = 'none';
@@ -250,7 +250,6 @@
                 return;
             }
 
-            // Hile ekranı açıksa oyun tuşlarını yoksay, sadece Enter'ı dinle
             if (document.getElementById('cheat-screen').style.display === 'block') {
                 if (e.key === 'Enter') checkCheat();
                 return;
@@ -262,22 +261,32 @@
         });
 
         window.addEventListener('keyup', e => { 
-            if (document.getElementById('cheat-screen').style.display === 'block') return; // Hile ekranındayken yoksay
+            if (document.getElementById('cheat-screen').style.display === 'block') return; 
             let key = e.key.toLowerCase(); if(key===' ') key=' '; 
             if(keys.hasOwnProperty(key)) keys[key] = false; 
         });
 
-        // --- HİLE SORGULAMA ---
+        // --- GÜNCELLENMİŞ HİLE SORGULAMA SİSTEMİ ---
         function checkCheat() {
             let input = document.getElementById('cheat-input');
-            if (input.value.trim() === 'ereninvitesi') {
+            let val = input.value.trim().toLowerCase(); // Büyük/Küçük harf duyarlılığını kaldırır
+            
+            if (val === 'ereninvitesi') {
                 player.img = 'araba0.png';
                 player.maxSpeed = 13.65; // ~150 km/h (13.65 * 11)
-                player.acceleration = 0.7; // Roket ivmesi!
-                alert("GİZLİ ARAÇ AKTİF EDİLDİ!");
-            } else {
+                player.acceleration = 0.7; // Yüksek ivme
+                alert("GİZLİ ARAÇ AKTİF EDİLDİ! (150 km/h)");
+            } 
+            else if (val === 'haşmetlieren' || val === 'hasmetlieren') { // Türkçe karakter opsiyonlu
+                player.img = 'araba00.png';
+                player.maxSpeed = 22.72; // ~250 km/h (22.72 * 11 = 249.9)
+                player.acceleration = 1.2; // Roket ivmesi! (Normalin 2.5 katı)
+                alert("HAŞMETLİ EREN SOKAKLARDA! (250 km/h)");
+            } 
+            else {
                 alert("Hatalı şifre!");
             }
+            
             document.getElementById('cheat-screen').style.display = 'none';
             input.value = '';
         }
