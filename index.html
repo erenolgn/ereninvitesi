@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EREN' İN VİTESİ</title>
+    <title>EREN'İN VİTESİ</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background-color: #111; overflow: hidden; font-family: 'Segoe UI', Tahoma, sans-serif; user-select: none; }
@@ -24,13 +24,10 @@
         .code-display { font-size: 24px; color: gold; margin: 15px 0; font-family: monospace; background: #000; padding: 10px; user-select: all; cursor: copy; }
 
         #ui { position: absolute; top: 20px; left: 20px; color: white; font-size: 24px; font-weight: bold; text-shadow: 2px 2px 0 #000; display: none; z-index: 5; }
-        #race-stats { position: absolute; top: 20px; right: 20px; text-align: right; display: none; z-index: 5; }
-        #checkpoint-ui { color: #ff3333; font-size: 28px; font-weight: bold; text-shadow: 2px 2px 0 #000; margin-bottom: 5px; }
-        #rank-ui { color: gold; font-size: 32px; font-weight: bold; text-shadow: 2px 2px 0 #000; }
-        
-        #interaction-prompt { position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); color: #fff; padding: 15px 30px; border-radius: 8px; font-size: 22px; display: none; z-index: 5; border: 2px solid #ff3333; text-align: center; line-height: 1.5; }
-        #race-ui { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 140px; font-weight: bold; text-shadow: 5px 5px 0 #000; display: none; z-index: 6; text-align: center; }
-        #race-result { font-size: 50px; color: gold; display: block; margin-top: 20px; text-shadow: 3px 3px 0 #000; }
+        #checkpoint-ui { position: absolute; top: 20px; right: 20px; color: #ff3333; font-size: 28px; font-weight: bold; text-shadow: 2px 2px 0 #000; display: none; z-index: 5; }
+        #interaction-prompt { position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: #ff3333; padding: 15px 30px; border-radius: 8px; font-size: 22px; font-weight: bold; display: none; z-index: 5; border: 2px solid #ff3333; text-align: center; }
+        #race-ui { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 140px; font-weight: bold; text-shadow: 5px 5px 0 #ff0000; display: none; z-index: 6; text-align: center; }
+        #race-result { font-size: 60px; color: gold; display: block; margin-top: 20px; }
     </style>
 </head>
 <body>
@@ -43,7 +40,7 @@
 
     <div id="menu-screen" class="overlay-screen" style="display: none;">
         <h1>ARACINI SEÇ</h1>
-        <p style="color:#aaa; font-size: 18px;">Hareket: W, A, S, D | Drift: BOŞLUK | Etkileşim: E / R | Harita: M</p>
+        <p style="color:#aaa; font-size: 18px;">Hareket: W, A, S, D | Drift: BOŞLUK | Etkileşim: E | Harita: M</p>
         <div class="car-container" id="car-list"></div>
     </div>
 
@@ -55,6 +52,8 @@
                 <button onclick="startHost()">Kodu Oluştur</button>
                 <div class="code-display" id="my-code">KOD BEKLENİYOR...</div>
                 <p id="host-status" style="color: #aaa;"></p>
+                <!-- OYUNA BAŞLAMA BUTONU BURADA -->
+                <button id="start-game-btn" onclick="enterGame()" style="display: none; background: #27ae60; width: 100%;">Şehre İn (Oyuna Başla)</button>
             </div>
             <div class="lobby-box">
                 <h2>Odaya Katıl</h2>
@@ -66,13 +65,14 @@
         <button onclick="playOffline()" style="margin-top: 30px; background: #555;">Tek Kişilik Oyna</button>
     </div>
 
-    <div id="ui">HIZ: <span id="speed-display">0</span> km/h <br> <span style="font-size:16px; color:#aaa">Harita için 'M' ye basılı tut</span></div>
-    
-    <div id="race-stats">
-        <div id="checkpoint-ui">CHECKPOINT: <span id="cp-display">0 / 0</span></div>
-        <div id="rank-ui">SIRA: <span id="rank-display">1 / 1</span></div>
+    <!-- UI EKRANINA KOD BİLGİSİ EKLENDİ -->
+    <div id="ui">
+        HIZ: <span id="speed-display">0</span> km/h <br> 
+        <span style="font-size:16px; color:#aaa">Harita için 'M' ye bas</span><br>
+        <span style="font-size:16px; color:#00ffcc; display:none;" id="ui-room-code">Oda Kodu: -</span>
     </div>
     
+    <div id="checkpoint-ui">CHECKPOINT: <span id="cp-display">0 / 0</span></div>
     <div id="interaction-prompt"></div>
     <div id="race-ui"><span id="countdown-text">3</span><br><span id="race-result"></span></div>
 
@@ -106,7 +106,6 @@
         carImagesNames.forEach(name => loadImage(name, 'car'));
         buildingNames.forEach(name => loadImage(name, 'building'));
 
-        // --- MERKEZİ AĞ (GLOBAL PLAYERS) DEĞİŞKENLERİ ---
         let playerName = "Sürücü";
         let gameState = 'auth'; 
         let showMinimap = false;
@@ -117,35 +116,51 @@
         let connections = {}; 
         let hostConnection = null; 
         
-        let globalPlayers = {}; 
+        let otherPlayers = {}; 
 
-        const keys = { w: false, a: false, s: false, d: false, ' ': false, e: false, r: false, m: false };
+        const keys = { w: false, a: false, s: false, d: false, ' ': false, e: false };
         window.addEventListener('keydown', e => { 
             let key = e.key.toLowerCase(); if(key===' ') key=' '; 
             if(keys.hasOwnProperty(key)) keys[key] = true; 
-            if(key === 'm') showMinimap = true;
+            if(key === 'm') showMinimap = !showMinimap;
         });
         window.addEventListener('keyup', e => { 
             let key = e.key.toLowerCase(); if(key===' ') key=' '; 
             if(keys.hasOwnProperty(key)) keys[key] = false; 
-            if(key === 'm') showMinimap = false;
         });
 
-        const mapBlocks = 32; const roadWidth = 320; const blockSize = 800; const totalBlockSize = roadWidth + blockSize; const mapSize = mapBlocks * totalBlockSize;
-        const buildings = []; const intersections = [];
+        const mapBlocks = 32; 
+        const roadWidth = 320; 
+        const blockSize = 800; 
+        const totalBlockSize = roadWidth + blockSize;
+        const mapSize = mapBlocks * totalBlockSize;
+        
+        const buildings = [];
+        const intersections = [];
 
         let mapSeed = 1923; 
-        function seededRandom() { let x = Math.sin(mapSeed++) * 10000; return x - Math.floor(x); }
+        function seededRandom() {
+            let x = Math.sin(mapSeed++) * 10000;
+            return x - Math.floor(x);
+        }
 
         function generateCity() {
             for (let x = 0; x < mapBlocks; x++) {
                 for (let y = 0; y < mapBlocks; y++) {
                     const worldX = x * totalBlockSize; const worldY = y * totalBlockSize;
                     intersections.push({ gridX: x, gridY: y, x: worldX + roadWidth/2, y: worldY + roadWidth/2 });
+
                     const blockStartX = worldX + roadWidth; const blockStartY = worldY + roadWidth;
                     const bSize = 200; const padding = 40;
-                    const positions = [{bx: blockStartX + padding, by: blockStartY + padding}, {bx: blockStartX + blockSize - bSize - padding, by: blockStartY + padding}, {bx: blockStartX + padding, by: blockStartY + blockSize - bSize - padding}, {bx: blockStartX + blockSize - bSize - padding, by: blockStartY + blockSize - bSize - padding}];
-                    positions.forEach(pos => { if(seededRandom() > 0.1) buildings.push({ x: pos.bx, y: pos.by, w: bSize, h: bSize, img: buildingNames[Math.floor(seededRandom() * buildingNames.length)] }); });
+                    const positions = [
+                        {bx: blockStartX + padding, by: blockStartY + padding},
+                        {bx: blockStartX + blockSize - bSize - padding, by: blockStartY + padding},
+                        {bx: blockStartX + padding, by: blockStartY + blockSize - bSize - padding},
+                        {bx: blockStartX + blockSize - bSize - padding, by: blockStartY + blockSize - bSize - padding}
+                    ];
+                    positions.forEach(pos => {
+                        if(seededRandom() > 0.1) buildings.push({ x: pos.bx, y: pos.by, w: bSize, h: bSize, img: buildingNames[Math.floor(seededRandom() * buildingNames.length)] });
+                    });
                 }
             }
         }
@@ -153,82 +168,104 @@
 
         class Car {
             constructor(x, y, isBot = false) {
-                this.x = x; this.y = y; this.width = 44; this.height = 88; this.angle = -Math.PI / 2; this.speed = 0; this.isBot = isBot;
-                this.maxSpeed = 15; this.acceleration = 0.25; this.friction = 0.95; this.velX = 0; this.velY = 0; this.img = null;
+                this.x = x; this.y = y; this.width = 44; this.height = 88;
+                this.angle = -Math.PI / 2; this.speed = 0; this.isBot = isBot;
+                this.maxSpeed = 15; this.acceleration = 0.25; this.friction = 0.95; 
+                this.velX = 0; this.velY = 0; this.img = null;
                 this.inRace = false; this.cpIndex = 0; this.targetAngle = this.angle;
-                this.mistakeProb = isBot ? (0.01 + Math.random() * 0.05) : 0; this.mistakeFrames = 0; this.mistakeAngle = 0; this.justTurned = false; this.offScreenFrames = 0; 
+                this.mistakeProb = isBot ? (0.01 + Math.random() * 0.05) : 0;
+                this.mistakeFrames = 0; this.mistakeAngle = 0; this.justTurned = false;
+                this.offScreenFrames = 0; 
             }
+
             draw(ctx) {
-                ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.angle + Math.PI/2);
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle + Math.PI/2);
                 if(this.img && images[this.img]) ctx.drawImage(images[this.img], -this.width/2, -this.height/2, this.width, this.height);
                 else { ctx.fillStyle = this.isBot ? 'red' : 'blue'; ctx.fillRect(-this.width/2, -this.height/2, this.width, this.height); }
+                
                 if(!this.isBot && keys[' '] && Math.abs(this.speed) > 4) {
-                    ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.arc(-15, 30, 6, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(15, 30, 6, 0, Math.PI*2); ctx.fill();
+                    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                    ctx.beginPath(); ctx.arc(-15, 30, 6, 0, Math.PI*2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(15, 30, 6, 0, Math.PI*2); ctx.fill();
                 }
                 ctx.restore();
             }
+
             checkCollisions() {
                 if (this.isBot && !this.inRace) return; 
                 for(let b of buildings) {
                     if(Math.abs(b.x - this.x) > 300 || Math.abs(b.y - this.y) > 300) continue;
                     if (this.x + this.width/2 > b.x && this.x - this.width/2 < b.x + b.w && this.y + this.height/2 > b.y && this.y - this.height/2 < b.y + b.h) {
-                        this.x -= this.velX * 1.5; this.y -= this.velY * 1.5; this.speed *= -0.4; this.velX *= -0.4; this.velY *= -0.4;
+                        this.x -= this.velX * 1.5; this.y -= this.velY * 1.5;
+                        this.speed *= -0.4; this.velX *= -0.4; this.velY *= -0.4;
                     }
                 }
-                if(this.x < 0) { this.x = 0; this.speed *= -0.4; } if(this.x > mapSize) { this.x = mapSize; this.speed *= -0.4; }
-                if(this.y < 0) { this.y = 0; this.speed *= -0.4; } if(this.y > mapSize) { this.y = mapSize; this.speed *= -0.4; }
+                if(this.x < 0) { this.x = 0; this.speed *= -0.4; }
+                if(this.x > mapSize) { this.x = mapSize; this.speed *= -0.4; }
+                if(this.y < 0) { this.y = 0; this.speed *= -0.4; }
+                if(this.y > mapSize) { this.y = mapSize; this.speed *= -0.4; }
             }
+
             respawnBot() {
                 let spawnGridX, spawnGridY, tryX, tryY;
-                do { spawnGridX = Math.floor(Math.random() * mapBlocks); spawnGridY = Math.floor(Math.random() * mapBlocks);
-                    tryX = spawnGridX * totalBlockSize + roadWidth/2; tryY = spawnGridY * totalBlockSize + roadWidth/2;
+                do {
+                    spawnGridX = Math.floor(Math.random() * mapBlocks);
+                    spawnGridY = Math.floor(Math.random() * mapBlocks);
+                    tryX = spawnGridX * totalBlockSize + roadWidth/2;
+                    tryY = spawnGridY * totalBlockSize + roadWidth/2;
                 } while (Math.abs(tryX - player.x) < canvas.width && Math.abs(tryY - player.y) < canvas.height); 
-                this.x = tryX; this.y = tryY; this.angle = [0, Math.PI/2, Math.PI, -Math.PI/2][Math.floor(Math.random() * 4)];
-                this.targetAngle = this.angle; this.speed = 3 + Math.random() * 2; this.img = carImagesNames[Math.floor(Math.random() * carImagesNames.length)]; this.offScreenFrames = 0;
+                this.x = tryX; this.y = tryY;
+                this.angle = [0, Math.PI/2, Math.PI, -Math.PI/2][Math.floor(Math.random() * 4)];
+                this.targetAngle = this.angle; this.speed = 3 + Math.random() * 2;
+                this.img = carImagesNames[Math.floor(Math.random() * carImagesNames.length)];
+                this.offScreenFrames = 0;
             }
         }
 
-        let netFrameCount = 0;
         const player = new Car(totalBlockSize + roadWidth/2, totalBlockSize + roadWidth/2);
         player.update = function() {
             if (gameState !== 'freeroam' && gameState !== 'racing') return;
-            let enginePower = 0; if (keys.w) enginePower = this.acceleration; if (keys.s) enginePower = -this.acceleration * 0.9; 
+            let enginePower = 0;
+            if (keys.w) enginePower = this.acceleration;
+            if (keys.s) enginePower = -this.acceleration * 0.9; 
             this.speed += enginePower; this.speed *= this.friction; 
-            if (this.speed > this.maxSpeed) this.speed = this.maxSpeed; if (this.speed < -this.maxSpeed * 0.4) this.speed = -this.maxSpeed * 0.4; 
+            if (this.speed > this.maxSpeed) this.speed = this.maxSpeed;
+            if (this.speed < -this.maxSpeed * 0.4) this.speed = -this.maxSpeed * 0.4; 
             let baseTurnSpeed = 0.055;
             if(Math.abs(this.speed) > 0.5) {
-                let dir = this.speed > 0 ? 1 : -1; let turnSpeed = baseTurnSpeed * (1 - (Math.abs(this.speed) / (this.maxSpeed * 2.5)));
-                if (keys.a) this.angle -= turnSpeed * dir; if (keys.d) this.angle += turnSpeed * dir;
+                let dir = this.speed > 0 ? 1 : -1;
+                let turnSpeed = baseTurnSpeed * (1 - (Math.abs(this.speed) / (this.maxSpeed * 2.5)));
+                if (keys.a) this.angle -= turnSpeed * dir;
+                if (keys.d) this.angle += turnSpeed * dir;
             }
             let grip = keys[' '] ? 0.85 : 0.96; 
             let targetVelX = Math.cos(this.angle) * this.speed; let targetVelY = Math.sin(this.angle) * this.speed;
             this.velX = (this.velX * (1 - grip)) + (targetVelX * grip); this.velY = (this.velY * (1 - grip)) + (targetVelY * grip);
-            this.x += this.velX; this.y += this.velY; this.checkCollisions();
+            this.x += this.velX; this.y += this.velY;
+            this.checkCollisions();
 
-            // AĞ OPTİMİZASYONU: Veriyi 60 kere değil, saniyede 30 kere (2 frame'de bir) yolla ve küsuratları sil.
-            netFrameCount++;
-            if (peer && myId && netFrameCount % 2 === 0) {
-                let myData = { 
-                    x: Math.round(this.x), y: Math.round(this.y), 
-                    angle: Number(this.angle.toFixed(2)), 
-                    img: this.img, name: playerName, inRace: this.inRace, cpIndex: this.cpIndex 
+            if (peer && myId) {
+                let payload = {
+                    type: 'UPDATE', id: myId,
+                    playerInfo: { x: this.x, y: this.y, angle: this.angle, img: this.img, name: playerName }
                 };
-                
                 if (isHost) {
-                    globalPlayers[myId] = myData; 
-                    let payload = { type: 'WORLD_STATE', players: globalPlayers };
                     Object.values(connections).forEach(c => { if(c.open) c.send(payload); });
                 } else if (hostConnection && hostConnection.open) {
-                    hostConnection.send({ type: 'CLIENT_STATE', data: myData });
+                    hostConnection.send(payload);
                 }
             }
         };
 
-        const bots = []; const directions = [0, Math.PI/2, Math.PI, -Math.PI/2]; 
-        for(let i=0; i<80; i++) { 
+        const bots = [];
+        const directions = [0, Math.PI/2, Math.PI, -Math.PI/2]; 
+        for(let i=0; i<100; i++) { 
             let spawnGridX = Math.floor(Math.random() * mapBlocks); let spawnGridY = Math.floor(Math.random() * mapBlocks);
             let bot = new Car(spawnGridX * totalBlockSize + roadWidth/2, spawnGridY * totalBlockSize + roadWidth/2, true);
-            bot.img = carImagesNames[Math.floor(Math.random() * carImagesNames.length)]; bot.angle = directions[Math.floor(Math.random() * directions.length)];
+            bot.img = carImagesNames[Math.floor(Math.random() * carImagesNames.length)];
+            bot.angle = directions[Math.floor(Math.random() * directions.length)];
             bot.speed = 3 + Math.random() * 2; bot.targetAngle = bot.angle;
             bot.update = function() {
                 if (gameState === 'pre_race') return;
@@ -236,28 +273,37 @@
                     const botMaxRaceSpeed = player.maxSpeed * 0.20; 
                     let targetCP = currentRace.route[this.cpIndex];
                     if (targetCP) {
-                        let dx = targetCP.x - this.x; let dy = targetCP.y - this.y; let desiredAngle = Math.atan2(dy, dx);
-                        if (this.mistakeFrames === 0 && Math.random() < (this.mistakeProb / 60)) { this.mistakeAngle = (Math.random() - 0.5) * 1.8; this.mistakeFrames = 20 + Math.floor(Math.random() * 30); }
+                        let dx = targetCP.x - this.x; let dy = targetCP.y - this.y;
+                        let desiredAngle = Math.atan2(dy, dx);
+                        if (this.mistakeFrames === 0 && Math.random() < (this.mistakeProb / 60)) { 
+                            this.mistakeAngle = (Math.random() - 0.5) * 1.8; this.mistakeFrames = 20 + Math.floor(Math.random() * 30); 
+                        }
                         if (this.mistakeFrames > 0) { desiredAngle += this.mistakeAngle; this.mistakeFrames--; this.speed *= 0.90; } 
                         else { this.speed += this.acceleration * 0.15; if(this.speed > botMaxRaceSpeed) this.speed = botMaxRaceSpeed; }
-                        let angleDiff = desiredAngle - this.angle; while (angleDiff > Math.PI) angleDiff -= Math.PI * 2; while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+                        let angleDiff = desiredAngle - this.angle;
+                        while (angleDiff > Math.PI) angleDiff -= Math.PI * 2; while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
                         if (Math.abs(angleDiff) > 0.15) this.speed *= 0.88; 
-                        let turnSpeed = 0.05; if (angleDiff > turnSpeed) this.angle += turnSpeed; else if (angleDiff < -turnSpeed) this.angle -= turnSpeed; else this.angle = desiredAngle;
+                        let turnSpeed = 0.05;
+                        if (angleDiff > turnSpeed) this.angle += turnSpeed; else if (angleDiff < -turnSpeed) this.angle -= turnSpeed; else this.angle = desiredAngle;
                     } else this.speed *= 0.9;
-                    this.velX = Math.cos(this.angle) * this.speed; this.velY = Math.sin(this.angle) * this.speed; this.x += this.velX; this.y += this.velY;
+                    this.velX = Math.cos(this.angle) * this.speed; this.velY = Math.sin(this.angle) * this.speed;
+                    this.x += this.velX; this.y += this.velY;
                 } else {
-                    this.velX = Math.cos(this.angle) * this.speed; this.velY = Math.sin(this.angle) * this.speed; this.x += this.velX; this.y += this.velY;
+                    this.velX = Math.cos(this.angle) * this.speed; this.velY = Math.sin(this.angle) * this.speed;
+                    this.x += this.velX; this.y += this.velY;
                     if(Math.abs(this.angle - this.targetAngle) > 0.05) this.angle += (this.targetAngle > this.angle) ? 0.05 : -0.05;
                     let inIntersection = false;
                     for(let inter of intersections) {
                         if(Math.abs(this.x - inter.x) <= this.speed && Math.abs(this.y - inter.y) <= this.speed && !this.justTurned) {
-                            this.x = inter.x; this.y = inter.y; this.targetAngle += [-Math.PI/2, 0, Math.PI/2][Math.floor(Math.random() * 3)];
+                            this.x = inter.x; this.y = inter.y; 
+                            this.targetAngle += [-Math.PI/2, 0, Math.PI/2][Math.floor(Math.random() * 3)];
                             this.justTurned = true; inIntersection = true; break;
                         }
                     }
                     if(!inIntersection) this.justTurned = false;
                     let isVisible = (this.x > camera.x - 300 && this.x < camera.x + canvas.width + 300 && this.y > camera.y - 300 && this.y < camera.y + canvas.height + 300);
-                    if (!isVisible) { this.offScreenFrames++; if (this.offScreenFrames > 60 * 30) this.respawnBot(); } else this.offScreenFrames = 0; 
+                    if (!isVisible) { this.offScreenFrames++; if (this.offScreenFrames > 60 * 30) this.respawnBot(); } 
+                    else this.offScreenFrames = 0; 
                 }
                 this.checkCollisions();
             };
@@ -265,24 +311,34 @@
         }
 
         const raceStarters = [
-            { x: totalBlockSize + roadWidth/2, y: totalBlockSize + roadWidth/2, gridX: 1, gridY: 1 }, { x: totalBlockSize*5 + roadWidth/2, y: totalBlockSize*2 + roadWidth/2, gridX: 5, gridY: 2 },
-            { x: totalBlockSize*2 + roadWidth/2, y: totalBlockSize*8 + roadWidth/2, gridX: 2, gridY: 8 }, { x: totalBlockSize*10 + roadWidth/2, y: totalBlockSize*10 + roadWidth/2, gridX: 10, gridY: 10 },
-            { x: totalBlockSize*15 + roadWidth/2, y: totalBlockSize*5 + roadWidth/2, gridX: 15, gridY: 5 }, { x: totalBlockSize*20 + roadWidth/2, y: totalBlockSize*15 + roadWidth/2, gridX: 20, gridY: 15 }
+            { x: totalBlockSize + roadWidth/2, y: totalBlockSize + roadWidth/2, gridX: 1, gridY: 1 },
+            { x: totalBlockSize*5 + roadWidth/2, y: totalBlockSize*2 + roadWidth/2, gridX: 5, gridY: 2 },
+            { x: totalBlockSize*2 + roadWidth/2, y: totalBlockSize*8 + roadWidth/2, gridX: 2, gridY: 8 },
+            { x: totalBlockSize*10 + roadWidth/2, y: totalBlockSize*10 + roadWidth/2, gridX: 10, gridY: 10 },
+            { x: totalBlockSize*15 + roadWidth/2, y: totalBlockSize*5 + roadWidth/2, gridX: 15, gridY: 5 },
+            { x: totalBlockSize*20 + roadWidth/2, y: totalBlockSize*15 + roadWidth/2, gridX: 20, gridY: 15 },
+            { x: totalBlockSize*8 + roadWidth/2, y: totalBlockSize*25 + roadWidth/2, gridX: 8, gridY: 25 },
+            { x: totalBlockSize*28 + roadWidth/2, y: totalBlockSize*28 + roadWidth/2, gridX: 28, gridY: 28 }
         ];
 
-        let currentRace = { active: false, route: [], withBots: false, bots: [] };
+        let currentRace = { active: false, route: [], racers: [] };
 
         function generateRoute(startGridX, startGridY) {
             let route = []; let cx = startGridX, cy = startGridY; let lastDir = -1;
-            const dirs = [[0,-1], [1,0], [0,1], [-1,0]]; let visited = new Set(); visited.add(`${cx},${cy}`);
-            for(let i = 0; i < 20; i++) { 
+            const dirs = [[0,-1], [1,0], [0,1], [-1,0]]; 
+            let visited = new Set(); visited.add(`${cx},${cy}`);
+
+            for(let i = 0; i < 25; i++) { 
                 let validDirs = []; let unvisitedDirs = [];
                 for(let d=0; d<4; d++) {
                     if (d === (lastDir + 2) % 4) continue; 
                     let nx = cx + dirs[d][0]; let ny = cy + dirs[d][1];
-                    if (nx >= 1 && nx < mapBlocks-1 && ny >= 1 && ny < mapBlocks-1) { validDirs.push(d); if (!visited.has(`${nx},${ny}`)) unvisitedDirs.push(d); }
+                    if (nx >= 1 && nx < mapBlocks-1 && ny >= 1 && ny < mapBlocks-1) {
+                        validDirs.push(d); if (!visited.has(`${nx},${ny}`)) unvisitedDirs.push(d); 
+                    }
                 }
-                let choices = unvisitedDirs.length > 0 ? unvisitedDirs : validDirs; if(choices.length === 0) break; 
+                let choices = unvisitedDirs.length > 0 ? unvisitedDirs : validDirs;
+                if(choices.length === 0) break; 
                 let chosenDir = choices[Math.floor(Math.random() * choices.length)];
                 cx += dirs[chosenDir][0]; cy += dirs[chosenDir][1]; lastDir = chosenDir; visited.add(`${cx},${cy}`);
                 route.push({ x: cx * totalBlockSize + roadWidth/2, y: cy * totalBlockSize + roadWidth/2, gridX: cx, gridY: cy });
@@ -290,46 +346,39 @@
             return route;
         }
 
-        function triggerRaceStart(starter, withBots) {
-            if (isHost) {
-                let route = generateRoute(starter.gridX, starter.gridY);
-                initRaceLocal(starter, route, withBots);
-                Object.values(connections).forEach(c => { if(c.open) c.send({ type: 'RACE_START', route, starter, withBots }); });
-            } else if (hostConnection) {
-                hostConnection.send({ type: 'REQ_RACE_START', starter, withBots }); 
-            }
-        }
-
-        function initRaceLocal(starter, route, withBots) {
+        function startRaceLogic(starter, isRemote = false, remoteRoute = null) {
             gameState = 'pre_race';
             document.getElementById('interaction-prompt').style.display = 'none';
-            document.getElementById('race-stats').style.display = 'block';
+            document.getElementById('checkpoint-ui').style.display = 'block';
             
             const raceUI = document.getElementById('race-ui'); const cdText = document.getElementById('countdown-text');
             const resText = document.getElementById('race-result');
-            raceUI.style.display = 'block'; resText.innerText = withBots ? "BOTLU YARIŞ" : "OYUNCU YARIŞI";
+            raceUI.style.display = 'block'; resText.innerText = "YARIŞ BAŞLIYOR!";
 
-            currentRace.route = route;
-            currentRace.withBots = withBots;
-            currentRace.bots = [];
+            if(isRemote) currentRace.route = remoteRoute; 
+            else {
+                currentRace.route = generateRoute(starter.gridX, starter.gridY);
+                let payload = { type: 'RACE_START', route: currentRace.route, starter: starter, sender: myId };
+                if (isHost) Object.values(connections).forEach(c => { if(c.open) c.send(payload); });
+                else if (hostConnection) hostConnection.send(payload);
+            }
 
             document.getElementById('cp-display').innerText = `0 / ${currentRace.route.length}`;
-            let startAngle = Math.atan2(route[0].y - starter.y, route[0].x - starter.x);
+            let firstCP = currentRace.route[0]; let startAngle = Math.atan2(firstCP.y - starter.y, firstCP.x - starter.x);
 
             player.x = starter.x + (Math.random() * 80 - 40); 
             player.y = starter.y + (Math.random() * 80 - 40); 
-            player.angle = startAngle; player.speed = 0; player.velX = 0; player.velY = 0; player.cpIndex = 0; player.inRace = true;
+            player.angle = startAngle; 
+            player.speed = 0; player.velX = 0; player.velY = 0; player.cpIndex = 0; player.inRace = true;
 
             currentRace.racers = [player];
 
-            if (withBots) {
-                for(let i=0; i<3; i++) {
-                    let rBot = bots[i];
-                    rBot.x = player.x + (Math.cos(startAngle + Math.PI/2) * (i%2===0 ? 80 : -80)); 
-                    rBot.y = player.y + (Math.sin(startAngle + Math.PI/2) * (i%2===0 ? 80 : -80));
-                    rBot.angle = startAngle; rBot.targetAngle = startAngle; rBot.speed = 0; rBot.cpIndex = 0; rBot.inRace = true;
-                    currentRace.bots.push(rBot);
-                }
+            for(let i=0; i<3; i++) {
+                let rBot = bots[i];
+                rBot.x = player.x + (Math.cos(startAngle + Math.PI/2) * (i%2===0 ? 80 : -80)); 
+                rBot.y = player.y + (Math.sin(startAngle + Math.PI/2) * (i%2===0 ? 80 : -80));
+                rBot.angle = startAngle; rBot.targetAngle = startAngle; rBot.speed = 0; rBot.cpIndex = 0; rBot.inRace = true; rBot.offScreenFrames = 0;
+                currentRace.racers.push(rBot);
             }
 
             let count = 3; cdText.innerText = count;
@@ -343,75 +392,38 @@
 
         function checkRaceProgress() {
             if(gameState !== 'racing') return;
-            
-            if (player.inRace && player.cpIndex < currentRace.route.length) {
-                let targetCP = currentRace.route[player.cpIndex];
-                if (Math.hypot(player.x - targetCP.x, player.y - targetCP.y) < 180) { 
-                    player.cpIndex++;
-                    document.getElementById('cp-display').innerText = `${player.cpIndex} / ${currentRace.route.length}`;
-                    
-                    if (player.cpIndex >= currentRace.route.length) {
-                        finishRaceLocal(playerName);
-                        if(isHost) {
-                            Object.values(connections).forEach(c => { if(c.open) c.send({ type: 'RACE_FINISH', winnerName: playerName }); });
-                        } else if(hostConnection) {
-                            hostConnection.send({ type: 'RACE_FINISH', winnerName: playerName });
+            for(let racer of currentRace.racers) {
+                if (racer.cpIndex < currentRace.route.length) {
+                    let targetCP = currentRace.route[racer.cpIndex];
+                    let dist = Math.hypot(racer.x - targetCP.x, racer.y - targetCP.y);
+                    if (dist < 180) { 
+                        racer.cpIndex++;
+                        if (racer === player) document.getElementById('cp-display').innerText = `${racer.cpIndex} / ${currentRace.route.length}`;
+                        
+                        if (racer.cpIndex === currentRace.route.length) {
+                            gameState = 'post_race'; document.getElementById('checkpoint-ui').style.display = 'none';
+                            const raceUI = document.getElementById('race-ui'); const cdText = document.getElementById('countdown-text');
+                            raceUI.style.display = 'block';
+                            
+                            if(racer === player) { cdText.innerText = "KAZANDIN!"; cdText.style.color = "gold"; } 
+                            else { cdText.innerText = "KAYBETTİN!"; cdText.style.color = "red"; }
+                            
+                            setTimeout(() => {
+                                raceUI.style.display = 'none'; gameState = 'freeroam';
+                                currentRace.racers.forEach(r => { r.inRace = false; });
+                            }, 4000); break;
                         }
                     }
                 }
             }
-
-            // SIRALAMA SİSTEMİ HESAPLAMASI
-            let standings = [];
-            const calcProg = (x, y, cpIdx) => {
-                if (cpIdx >= currentRace.route.length) return 9999999;
-                let target = currentRace.route[cpIdx];
-                let dist = Math.hypot(x - target.x, y - target.y);
-                return (cpIdx * 10000) - dist; 
-            };
-
-            standings.push({ name: playerName, prog: calcProg(player.x, player.y, player.cpIndex), isMe: true });
-            
-            for(let id in globalPlayers) {
-                if (id === myId) continue;
-                let gp = globalPlayers[id];
-                if (gp.inRace) standings.push({ name: gp.name, prog: calcProg(gp.x, gp.y, gp.cpIndex), isMe: false });
-            }
-
-            if (currentRace.withBots) {
-                currentRace.bots.forEach((b, i) => { standings.push({ name: 'Bot '+(i+1), prog: calcProg(b.x, b.y, b.cpIndex), isMe: false }); });
-            }
-
-            standings.sort((a,b) => b.prog - a.prog);
-            let myRank = standings.findIndex(s => s.isMe) + 1;
-            document.getElementById('rank-display').innerText = `${myRank} / ${standings.length}`;
-        }
-
-        function finishRaceLocal(winnerName) {
-            if (gameState !== 'racing') return; 
-            gameState = 'post_race'; 
-            document.getElementById('race-stats').style.display = 'none';
-            const raceUI = document.getElementById('race-ui'); const cdText = document.getElementById('countdown-text'); const resText = document.getElementById('race-result');
-            raceUI.style.display = 'block';
-            
-            let isMe = (winnerName === playerName);
-            cdText.innerText = isMe ? "KAZANDIN!" : "KAYBETTİN!";
-            cdText.style.color = isMe ? "gold" : "red";
-            resText.innerText = isMe ? "" : `Kazanan: ${winnerName}`;
-            
-            setTimeout(() => {
-                raceUI.style.display = 'none'; gameState = 'freeroam';
-                player.inRace = false;
-                currentRace.bots.forEach(b => { b.inRace = false; });
-            }, 5000);
         }
 
         const camera = { x: 0, y: 0 };
 
         function drawNameTag(name, x, y, color) {
-            ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(x - 60, y - 65, 120, 25);
+            ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(x - 50, y - 60, 100, 25);
             ctx.fillStyle = color; ctx.font = "bold 16px Arial"; ctx.textAlign = "center";
-            ctx.fillText(name, x, y - 47);
+            ctx.fillText(name, x, y - 42);
         }
 
         function gameLoop() {
@@ -428,9 +440,8 @@
                     for(let rs of raceStarters) {
                         if(Math.hypot(player.x - rs.x, player.y - rs.y) < 150) {
                             nearRace = true; promptUi.style.display = 'block';
-                            promptUi.innerHTML = `<b>YARIŞ NOKTASI</b><br><span style="color:#00ffcc">Botlu Karma Yarış: [E] tuşu</span><br><span style="color:gold">Sadece Oyuncular: [R] tuşu</span>`;
-                            if(keys.e) { keys.e = false; triggerRaceStart(rs, true); } 
-                            if(keys.r) { keys.r = false; triggerRaceStart(rs, false); } 
+                            promptUi.innerHTML = `<b>SOKAK YARIŞI</b><br>Başlamak için 'E' tuşuna bas`;
+                            if(keys.e) { keys.e = false; startRaceLogic(rs); }
                             break;
                         }
                     }
@@ -470,7 +481,9 @@
                     
                     let lastCP = currentRace.route[currentRace.route.length - 1];
                     ctx.fillStyle = 'white';
-                    for(let i=-60; i<60; i+=20) { for(let j=-60; j<60; j+=20) { if((i+j)%40===0) ctx.fillRect(lastCP.x + i, lastCP.y + j, 20, 20); } }
+                    for(let i=-60; i<60; i+=20) {
+                        for(let j=-60; j<60; j+=20) { if((i+j)%40===0) ctx.fillRect(lastCP.x + i, lastCP.y + j, 20, 20); }
+                    }
                 }
 
                 if(gameState === 'freeroam') {
@@ -490,49 +503,48 @@
                     if (bot.x > camera.x - 100 && bot.x < camera.x + canvas.width + 100 && bot.y > camera.y - 100 && bot.y < camera.y + canvas.height + 100) { bot.draw(ctx); }
                 });
 
-                // DİĞER TÜM OYUNCULARI ÇİZ
-                for(let id in globalPlayers) {
-                    if (id === myId) continue;
-                    let op = globalPlayers[id];
+                Object.values(otherPlayers).forEach(op => {
                     ctx.save(); ctx.translate(op.x, op.y); ctx.rotate(op.angle + Math.PI/2);
                     if(images[op.img]) ctx.drawImage(images[op.img], -22, -44, 44, 88);
                     ctx.restore();
                     drawNameTag(op.name, op.x, op.y, "#00ffcc");
-                }
+                });
 
                 player.draw(ctx);
                 drawNameTag(playerName, player.x, player.y, "gold");
 
                 ctx.restore();
 
-                // --- MİNİMAP (GPS) EKRANI ---
                 if (showMinimap) {
                     ctx.save();
                     ctx.setTransform(1, 0, 0, 1, 0, 0); 
-                    let mapW = Math.min(canvas.width * 0.8, 800); let mapH = Math.min(canvas.height * 0.8, 800);
-                    let mX = (canvas.width - mapW) / 2; let mY = (canvas.height - mapH) / 2;
+                    let mapW = Math.min(canvas.width * 0.8, 800);
+                    let mapH = Math.min(canvas.height * 0.8, 800);
+                    let mX = (canvas.width - mapW) / 2;
+                    let mY = (canvas.height - mapH) / 2;
 
-                    ctx.fillStyle = 'rgba(0, 0, 0, 0.85)'; ctx.fillRect(mX, mY, mapW, mapH);
-                    ctx.strokeStyle = '#00ffcc'; ctx.lineWidth = 5; ctx.strokeRect(mX, mY, mapW, mapH);
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+                    ctx.fillRect(mX, mY, mapW, mapH);
+                    ctx.strokeStyle = '#00ffcc'; ctx.lineWidth = 4; ctx.strokeRect(mX, mY, mapW, mapH);
 
                     let scale = mapW / mapSize;
 
-                    // Yarış Noktaları (Kırmızı)
                     raceStarters.forEach(rs => {
-                        ctx.fillStyle = '#ff3333'; ctx.beginPath(); ctx.arc(mX + rs.x * scale, mY + rs.y * scale, 8, 0, Math.PI*2); ctx.fill();
+                        ctx.fillStyle = '#ff3333'; ctx.beginPath();
+                        ctx.arc(mX + rs.x * scale, mY + rs.y * scale, 6, 0, Math.PI*2); ctx.fill();
                     });
 
-                    // Diğer Oyuncular (Turkuaz)
-                    for(let id in globalPlayers) {
-                        if (id === myId) continue;
-                        let op = globalPlayers[id];
-                        ctx.fillStyle = '#00ffcc'; ctx.beginPath(); ctx.arc(mX + op.x * scale, mY + op.y * scale, 12, 0, Math.PI*2); ctx.fill();
-                        ctx.fillStyle = 'white'; ctx.font = 'bold 16px Arial'; ctx.fillText(op.name, mX + op.x * scale - 20, mY + op.y * scale - 18);
-                    }
+                    Object.values(otherPlayers).forEach(op => {
+                        ctx.fillStyle = '#00ffcc'; ctx.beginPath();
+                        ctx.arc(mX + op.x * scale, mY + op.y * scale, 8, 0, Math.PI*2); ctx.fill();
+                        ctx.fillStyle = 'white'; ctx.font = '12px Arial';
+                        ctx.fillText(op.name, mX + op.x * scale - 15, mY + op.y * scale - 12);
+                    });
 
-                    // Biz (Altın)
-                    ctx.fillStyle = 'gold'; ctx.beginPath(); ctx.arc(mX + player.x * scale, mY + player.y * scale, 14, 0, Math.PI*2); ctx.fill();
-                    ctx.fillStyle = 'white'; ctx.font = 'bold 18px Arial'; ctx.fillText("SEN", mX + player.x * scale - 18, mY + player.y * scale - 20);
+                    ctx.fillStyle = 'gold'; ctx.beginPath();
+                    ctx.arc(mX + player.x * scale, mY + player.y * scale, 10, 0, Math.PI*2); ctx.fill();
+                    ctx.fillStyle = 'white'; ctx.font = 'bold 14px Arial';
+                    ctx.fillText("SEN", mX + player.x * scale - 12, mY + player.y * scale - 15);
 
                     ctx.restore();
                 }
@@ -540,12 +552,26 @@
             requestAnimationFrame(gameLoop);
         }
 
-        // --- AĞ YAPILANDIRMASI (GOOGLE STUN DESTEKLİ) ---
+        // --- GÜNCELLENEN LOBİ VE OYUNA GİRİŞ SİSTEMİ ---
+        
+        function enterGame() {
+            document.getElementById('lobby-screen').style.display = 'none';
+            document.getElementById('ui').style.display = 'block';
+            gameState = 'freeroam';
+        }
+
+        function playOffline() {
+            enterGame();
+        }
 
         function saveName() {
             let input = document.getElementById('player-name-input').value.trim();
-            if(input.length > 0) { playerName = input; document.getElementById('name-screen').style.display = 'none'; document.getElementById('menu-screen').style.display = 'flex'; loadCarMenu(); } 
-            else alert("Lütfen bir isim girin!");
+            if(input.length > 0) {
+                playerName = input;
+                document.getElementById('name-screen').style.display = 'none';
+                document.getElementById('menu-screen').style.display = 'flex';
+                loadCarMenu();
+            } else alert("Lütfen bir isim girin!");
         }
 
         function loadCarMenu() {
@@ -553,60 +579,59 @@
             carImagesNames.forEach(imgName => {
                 const card = document.createElement('div'); card.className = 'car-card';
                 card.innerHTML = `<img src="${imgName}" alt="Araba"><br/><span style="color:#fff">${imgName.split('.')[0].toUpperCase()}</span>`;
-                card.onclick = () => { player.img = imgName; document.getElementById('menu-screen').style.display = 'none'; document.getElementById('lobby-screen').style.display = 'flex'; gameState = 'lobby'; };
+                card.onclick = () => {
+                    player.img = imgName;
+                    document.getElementById('menu-screen').style.display = 'none';
+                    document.getElementById('lobby-screen').style.display = 'flex';
+                    gameState = 'lobby';
+                };
                 carListDiv.appendChild(card);
             });
         }
 
-        function playOffline() { document.getElementById('lobby-screen').style.display = 'none'; document.getElementById('ui').style.display = 'block'; gameState = 'freeroam'; }
-
-        // 3. ve 4. kişilerin de kesintisiz girmesini sağlayan Güçlü STUN Yapısı
-        const peerConfig = { 
-            config: { 
-                'iceServers': [ 
-                    { url: 'stun:stun.l.google.com:19302' }, 
-                    { url: 'stun:stun1.l.google.com:19302' },
-                    { url: 'stun:stun2.l.google.com:19302' },
-                    { url: 'stun:stun3.l.google.com:19302' }
-                ] 
-            } 
-        };
-
         function handleNetworkData(data, senderId) {
-            if (data.type === 'CLIENT_STATE') {
-                globalPlayers[senderId] = data.data; 
-            } 
-            else if (data.type === 'WORLD_STATE') {
-                globalPlayers = data.players; 
-            } 
-            else if (data.type === 'REQ_RACE_START') {
-                if(isHost) triggerRaceStart(data.starter, data.withBots); 
-            } 
-            else if (data.type === 'RACE_START') {
-                if (!player.inRace) initRaceLocal(data.starter, data.route, data.withBots);
-            }
-            else if (data.type === 'RACE_FINISH') {
-                finishRaceLocal(data.winnerName);
+            if (data.type === 'UPDATE') {
+                let pId = data.id; 
+                otherPlayers[pId] = data.playerInfo;
+                
                 if (isHost) {
-                    Object.values(connections).forEach(c => { if(c.open && c.peer !== senderId) c.send(data); });
+                    Object.values(connections).forEach(c => {
+                        if (c.open && c.peer !== pId && c.peer !== senderId) {
+                            c.send(data);
+                        }
+                    });
+                }
+            } else if (data.type === 'RACE_START') {
+                if (!player.inRace) startRaceLogic(data.starter, true, data.route);
+                
+                if (isHost) {
+                    Object.values(connections).forEach(c => {
+                        if (c.open && c.peer !== senderId) c.send(data);
+                    });
                 }
             }
         }
 
         function startHost() {
             document.getElementById('host-status').innerText = "Sunucu başlatılıyor...";
-            peer = new Peer(peerConfig); 
+            peer = new Peer(); 
             peer.on('open', id => {
                 myId = id; isHost = true;
+                
                 document.getElementById('my-code').innerText = id;
-                document.getElementById('host-status').innerText = "Oda açıldı! Arkadaşların bağlanabilir...";
-                document.getElementById('ui').style.display = 'block'; document.getElementById('lobby-screen').style.display = 'none'; gameState = 'freeroam';
+                document.getElementById('host-status').innerText = "Oda açıldı! Kodu kopyala ve arkadaşlarına gönder.";
+                
+                // Oyuna girme butonunu göster
+                document.getElementById('start-game-btn').style.display = 'inline-block';
+                
+                // Oyun içi UI'a kodu sabitle
+                document.getElementById('ui-room-code').style.display = 'inline';
+                document.getElementById('ui-room-code').innerText = "Oda Kodun: " + id;
             });
             peer.on('connection', conn => {
                 connections[conn.peer] = conn; 
                 conn.on('data', data => handleNetworkData(data, conn.peer));
-                conn.on('close', () => { delete globalPlayers[conn.peer]; delete connections[conn.peer]; });
-                conn.on('error', () => { delete globalPlayers[conn.peer]; delete connections[conn.peer]; });
+                conn.on('close', () => { delete otherPlayers[conn.peer]; delete connections[conn.peer]; });
             });
         }
 
@@ -615,16 +640,19 @@
             if(!code) return alert("Lütfen bir kod girin!");
             document.getElementById('join-status').innerText = "Bağlanılıyor...";
             
-            peer = new Peer(peerConfig);
+            peer = new Peer();
             peer.on('open', id => {
                 myId = id; isHost = false;
                 hostConnection = peer.connect(code);
                 hostConnection.on('open', () => {
-                    document.getElementById('lobby-screen').style.display = 'none'; document.getElementById('ui').style.display = 'block'; gameState = 'freeroam';
+                    // Bağlanan kişiye de oda kodunu sabitle
+                    document.getElementById('ui-room-code').style.display = 'inline';
+                    document.getElementById('ui-room-code').innerText = "Bağlı Olunan Oda: " + code;
+                    
+                    enterGame(); // Bağlanınca direkt oyuna gir
                 });
                 hostConnection.on('data', data => handleNetworkData(data, hostConnection.peer));
                 hostConnection.on('close', () => { alert("Sunucu kapandı!"); location.reload(); });
-                hostConnection.on('error', () => { alert("Bağlantı Hatası!"); location.reload(); });
             });
         }
 
