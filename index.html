@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Online Devasa Şehir ve Yarış Oyunu V15</title>
+    <title>Online Devasa Şehir ve Yarış Oyunu V16</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background-color: #111; overflow: hidden; font-family: 'Segoe UI', Tahoma, sans-serif; user-select: none; touch-action: none; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background-color: #111; overflow: hidden; font-family: 'Segoe UI', Tahoma, sans-serif; user-select: none; touch-action: none; -webkit-user-select: none; -webkit-touch-callout: none; }
         canvas { display: block; }
         
         .overlay-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; z-index: 50; }
         
-        input[type="text"] { padding: 15px; font-size: 20px; border-radius: 8px; border: 2px solid #555; background: #222; color: white; margin-bottom: 20px; width: 300px; text-align: center; }
+        input[type="text"] { padding: 15px; font-size: 20px; border-radius: 8px; border: 2px solid #555; background: #222; color: white; margin-bottom: 20px; width: 300px; text-align: center; outline: none; }
         button { padding: 15px 30px; font-size: 20px; border-radius: 8px; border: none; background: #ff3333; color: white; cursor: pointer; font-weight: bold; transition: 0.2s; margin: 5px; }
         button:hover { background: #ff6666; transform: scale(1.05); }
         
@@ -23,53 +23,67 @@
         .lobby-box { background: #222; padding: 30px; border-radius: 10px; text-align: center; margin: 10px; border: 1px solid #444; width: 400px; max-width: 90%; }
         .code-display { font-size: 24px; color: gold; margin: 15px 0; font-family: monospace; background: #000; padding: 10px; user-select: all; cursor: copy; }
 
-        #ui { position: absolute; top: 20px; left: 20px; color: white; font-size: 24px; font-weight: bold; text-shadow: 2px 2px 0 #000; display: none; z-index: 5; pointer-events: none;}
-        #checkpoint-ui { position: absolute; top: 20px; right: 20px; color: #ff3333; font-size: 28px; font-weight: bold; text-shadow: 2px 2px 0 #000; display: none; z-index: 5; }
+        /* ARAYÜZ (Tıklamaları yoksayması için pointer-events: none eklendi) */
+        #ui { position: absolute; top: 20px; left: 20px; color: white; font-size: 24px; font-weight: bold; text-shadow: 2px 2px 0 #000; display: none; z-index: 5; pointer-events: none; background: rgba(0,0,0,0.4); padding: 10px; border-radius: 8px; }
+        #checkpoint-ui { position: absolute; top: 20px; right: 20px; color: #ff3333; font-size: 28px; font-weight: bold; text-shadow: 2px 2px 0 #000; display: none; z-index: 5; pointer-events: none; background: rgba(0,0,0,0.4); padding: 10px; border-radius: 8px; }
         
-        /* CANLI SIRALAMA (Mobilde Tıklamaları Engellememesi İçin pointer-events: none eklendi) */
-        #leaderboard-ui { position: absolute; top: 80px; right: 20px; background: rgba(0,0,0,0.85); color: white; padding: 15px; border-radius: 8px; border: 2px solid #ff3333; display: none; z-index: 5; font-size: 18px; min-width: 220px; box-shadow: 4px 4px 0 rgba(0,0,0,0.5); pointer-events: none; }
+        #leaderboard-ui { position: absolute; top: 120px; right: 20px; background: rgba(0,0,0,0.7); color: white; padding: 15px; border-radius: 8px; border: 2px solid #ff3333; display: none; z-index: 5; font-size: 18px; min-width: 220px; box-shadow: 4px 4px 0 rgba(0,0,0,0.5); pointer-events: none; }
         #leaderboard-ui h3 { margin: 0 0 10px 0; color: #00ffcc; text-align: center; font-size: 22px; border-bottom: 2px solid #444; padding-bottom: 5px; }
-        #leaderboard-list div { padding: 5px 0; font-weight: bold; }
+        #leaderboard-list div { padding: 5px 0; font-weight: bold; text-shadow: 1px 1px 0 #000; }
 
-        #interaction-prompt { position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: #ff3333; padding: 15px 30px; border-radius: 8px; font-size: 22px; font-weight: bold; display: none; z-index: 5; border: 2px solid #ff3333; text-align: center; }
+        #interaction-prompt { position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: #ff3333; padding: 15px 30px; border-radius: 8px; font-size: 22px; font-weight: bold; display: none; z-index: 5; border: 2px solid #ff3333; text-align: center; pointer-events: none; }
         #race-ui { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 140px; font-weight: bold; text-shadow: 5px 5px 0 #ff0000; display: none; z-index: 6; text-align: center; width: 100%; pointer-events: none;}
         #race-result { font-size: 60px; color: gold; display: block; margin-top: 20px; }
 
-        #custom-race-menu { position: absolute; top: 10%; left: 10%; width: 80%; height: 80%; background: rgba(0,0,0,0.95); z-index: 25; display: none; flex-direction: column; color: white; padding: 20px; border: 2px solid #00ffcc; border-radius: 10px; box-sizing: border-box; }
-        #custom-race-menu h2 { color: #00ffcc; text-align: center; border-bottom: 1px solid #444; padding-bottom: 10px; }
-        .player-list-item { display: flex; justify-content: space-between; align-items: center; background: #222; padding: 10px; margin-bottom: 10px; border-radius: 5px; font-size: 20px; }
-        .player-list-item button { font-size: 16px; padding: 10px 15px; }
+        /* YARIŞ MENÜSÜ */
+        #custom-race-menu { position: absolute; top: 5%; left: 5%; width: 90%; height: 90%; background: rgba(0,0,0,0.95); z-index: 25; display: none; flex-direction: column; color: white; padding: 20px; border: 2px solid #00ffcc; border-radius: 10px; box-sizing: border-box; }
+        #custom-race-menu h2 { color: #00ffcc; text-align: center; border-bottom: 1px solid #444; padding-bottom: 10px; margin-top: 0; }
+        .player-list-item { display: flex; justify-content: space-between; align-items: center; background: #222; padding: 10px; margin-bottom: 10px; border-radius: 5px; font-size: 18px; }
+        .player-list-item button { font-size: 14px; padding: 8px 12px; }
         
-        #invite-popup { display: none; position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background: #ff3333; padding: 20px; border-radius: 10px; z-index: 30; text-align: center; color: white; font-weight: bold; font-size: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); border: 2px solid white; }
+        #invite-popup { display: none; position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background: #ff3333; padding: 20px; border-radius: 10px; z-index: 30; text-align: center; color: white; font-weight: bold; font-size: 18px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); border: 2px solid white; width: 80%; max-width: 400px; }
 
-        /* YENİ MOBİL KONTROLLER (Araları Açık ve Büyük Tuşlar) */
-        #mobile-toggle-btn { position: absolute; bottom: 20px; right: 20px; background: #ff3333; border: 3px solid white; color: white; border-radius: 50%; width: 70px; height: 70px; font-size: 30px; display: none; z-index: 40; justify-content: center; align-items: center; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        /* MOBİL KONTROLLER */
+        #mobile-toggle-btn { position: absolute; bottom: 20px; right: 20px; background: #ff3333; border: 3px solid white; color: white; border-radius: 50%; width: 60px; height: 60px; font-size: 26px; display: none; z-index: 40; justify-content: center; align-items: center; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
         #mobile-controls { display: none; position: absolute; bottom: 0; left: 0; width: 100%; height: 100%; z-index: 35; pointer-events: none; }
         
-        .mc-dpad { position: absolute; bottom: 20px; left: 20px; width: 220px; height: 220px; pointer-events: auto; }
-        .mc-actions { position: absolute; bottom: 20px; right: 20px; width: 220px; height: 220px; pointer-events: auto; }
-        .mc-btn { position: absolute; width: 65px; height: 65px; background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.6); border-radius: 12px; color: white; font-weight: bold; display: flex; justify-content: center; align-items: center; font-size: 24px; user-select: none; }
-        .mc-btn:active { background: rgba(255,50,50,0.5); }
+        .mc-dpad { position: absolute; bottom: 20px; left: 20px; width: 200px; height: 200px; pointer-events: auto; }
+        .mc-actions { position: absolute; bottom: 20px; right: 20px; width: 200px; height: 200px; pointer-events: auto; }
+        .mc-btn { position: absolute; width: 60px; height: 60px; background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.5); border-radius: 12px; color: white; font-weight: bold; display: flex; justify-content: center; align-items: center; font-size: 22px; user-select: none; transition: background 0.1s; }
+        .mc-btn:active, .mc-btn.active-touch { background: rgba(255,50,50,0.6); border-color: white; }
         
-        /* D-Pad Yerleşimi (Aralar Açıldı) */
-        #btn-w { top: 0; left: 77.5px; }
-        #btn-s { bottom: 0; left: 77.5px; }
-        #btn-a { top: 77.5px; left: 0; }
-        #btn-d { top: 77.5px; right: 0; }
+        /* D-Pad Yerleşimi */
+        #btn-w { top: 0; left: 70px; }
+        #btn-s { bottom: 0; left: 70px; }
+        #btn-a { top: 70px; left: 0; }
+        #btn-d { top: 70px; right: 0; }
 
         /* Aksiyon Butonları */
-        #btn-space { bottom: 0; left: 0; width: 90px; height: 90px; border-radius: 50%; font-size: 18px; border: 3px solid #ffaa00; background: rgba(255, 170, 0, 0.2); }
-        #btn-space:active { background: rgba(255, 170, 0, 0.6); }
-        #btn-e { top: 0; right: 0; background: rgba(0,255,200,0.3); }
-        #btn-r { top: 0; left: 0; background: rgba(255,0,255,0.3); }
-        #btn-m { bottom: 0; right: 0; background: rgba(100,100,255,0.3); }
+        #btn-space { bottom: 0; left: 0; width: 80px; height: 80px; border-radius: 50%; font-size: 16px; border: 3px solid #ffaa00; background: rgba(255, 170, 0, 0.2); }
+        #btn-space:active, #btn-space.active-touch { background: rgba(255, 170, 0, 0.7); }
+        #btn-e { top: 0; right: 0; background: rgba(0,255,200,0.2); }
+        #btn-r { top: 0; left: 0; background: rgba(255,0,255,0.2); }
+        #btn-m { bottom: 0; right: 0; background: rgba(100,100,255,0.2); }
 
-        /* Mobil Ekranlar İçin UI Küçültme */
-        @media (max-width: 800px) {
-            #leaderboard-ui { top: 10px; right: 10px; font-size: 14px; min-width: 150px; padding: 10px; }
-            #leaderboard-ui h3 { font-size: 16px; margin-bottom: 5px; }
-            #checkpoint-ui { font-size: 20px; top: 10px; }
-            #ui { font-size: 16px; top: 10px; left: 10px; }
+        /* MOBİL EKRAN OPTİMİZASYONU (SIRALAMA SOLA KAYIYOR) */
+        @media (max-width: 900px) {
+            #ui { font-size: 14px; top: 10px; left: 10px; padding: 5px 10px; }
+            #checkpoint-ui { font-size: 18px; top: 10px; right: 10px; padding: 5px 10px; }
+            
+            /* SIRALAMA SAĞDAN SOLA, UI'IN ALTINA GEÇİYOR */
+            #leaderboard-ui { top: 85px; left: 10px; right: auto; font-size: 12px; min-width: 140px; padding: 8px; background: rgba(0,0,0,0.5); }
+            #leaderboard-ui h3 { font-size: 14px; margin-bottom: 5px; }
+            
+            .mc-dpad { width: 180px; height: 180px; bottom: 10px; left: 10px; }
+            .mc-actions { width: 180px; height: 180px; bottom: 10px; right: 10px; }
+            .mc-btn { width: 55px; height: 55px; font-size: 18px; }
+            
+            #btn-w { top: 0; left: 62.5px; }
+            #btn-s { bottom: 0; left: 62.5px; }
+            #btn-a { top: 62.5px; left: 0; }
+            #btn-d { top: 62.5px; right: 0; }
+
+            #btn-space { width: 70px; height: 70px; font-size: 14px; }
         }
     </style>
 </head>
@@ -83,13 +97,13 @@
 
     <div id="menu-screen" class="overlay-screen" style="display: none;">
         <h1>ARACINI SEÇ</h1>
-        <p style="color:#aaa; font-size: 18px;">Hareket: W, A, S, D | Drift: BOŞLUK | Etkileşim: E | Harita: M | Yarış Menüsü: R</p>
+        <p style="color:#aaa; font-size: 16px; text-align: center; padding: 0 20px;">Hareket: W,A,S,D | Drift: BOŞLUK | Etkileşim: E | Harita: M | Yarış Menüsü: R</p>
         <div class="car-container" id="car-list"></div>
     </div>
 
     <div id="lobby-screen" class="overlay-screen" style="display: none;">
         <h1>ONLİNE LOBİ</h1>
-        <div style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;">
+        <div style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; overflow-y: auto; max-height: 80vh; padding-bottom: 20px;">
             <div class="lobby-box">
                 <h2>Sunucu Ol (Oda Kur)</h2>
                 <button onclick="startHost()">Kodu Oluştur</button>
@@ -103,20 +117,20 @@
                 <button onclick="joinRoom()">Bağlan</button>
                 <p id="join-status" style="color: #aaa;"></p>
             </div>
+            <button onclick="playOffline()" style="margin-top: 10px; background: #555; width: 90%; max-width: 400px;">Tek Kişilik Oyna</button>
         </div>
-        <button onclick="playOffline()" style="margin-top: 30px; background: #555;">Tek Kişilik Oyna</button>
     </div>
 
     <div id="ui">
         HIZ: <span id="speed-display">0</span> km/h <br> 
-        <span style="font-size:16px; color:#aaa">Harita için M, Yarış Kurmak için R</span><br>
-        <span style="font-size:16px; color:#00ffcc; display:none;" id="ui-room-code">Oda Kodu: -</span>
+        <span style="font-size:12px; color:#aaa">M: Harita | R: Yarış Kur</span><br>
+        <span style="font-size:12px; color:#00ffcc; display:none;" id="ui-room-code">Oda: -</span>
     </div>
     
     <div id="checkpoint-ui">CHECKPOINT: <span id="cp-display">0 / 0</span></div>
     
     <div id="leaderboard-ui">
-        <h3>CANLI SIRALAMA</h3>
+        <h3>SIRALAMA</h3>
         <div id="leaderboard-list"></div>
     </div>
 
@@ -124,18 +138,18 @@
     <div id="custom-race-menu">
         <h2>ÖZEL YARIŞ OLUŞTUR</h2>
         <div style="flex: 1; overflow-y: auto; padding: 10px; background: #111; border-radius: 5px;" id="rm-player-list"></div>
-        <h3 style="color: gold; margin-top: 20px;">Kabul Eden Sürücüler: <span id="rm-accepted-list" style="color: white; font-weight: normal;">Yok</span></h3>
+        <h3 style="color: gold; margin-top: 15px; font-size: 16px;">Kabul Edenler: <span id="rm-accepted-list" style="color: white; font-weight: normal;">Yok</span></h3>
         <div style="display: flex; justify-content: space-between; margin-top: 10px;">
-            <button onclick="startCustomRace()" style="background: #27ae60; flex: 1; margin-right: 10px;">Yarışı Başlat</button>
-            <button onclick="closeRaceMenu()" style="background: #555; flex: 1;">Kapat</button>
+            <button onclick="startCustomRace()" style="background: #27ae60; flex: 1; margin-right: 10px; font-size: 16px;">Başlat</button>
+            <button onclick="closeRaceMenu()" style="background: #555; flex: 1; font-size: 16px;">Kapat</button>
         </div>
     </div>
 
     <div id="invite-popup">
-        <div id="invite-text">Biri seni yarışa davet ediyor!</div>
-        <div style="margin-top: 15px;">
-            <button onclick="acceptInvite()" style="background: #27ae60;">Kabul Et</button>
-            <button onclick="document.getElementById('invite-popup').style.display='none'" style="background: #333;">Reddet</button>
+        <div id="invite-text">Biri davet ediyor!</div>
+        <div style="margin-top: 15px; display: flex; justify-content: center; gap: 10px;">
+            <button onclick="acceptInvite()" style="background: #27ae60; padding: 10px 20px;">Kabul Et</button>
+            <button onclick="document.getElementById('invite-popup').style.display='none'" style="background: #333; padding: 10px 20px;">Reddet</button>
         </div>
     </div>
 
@@ -218,7 +232,7 @@
             if(keys.hasOwnProperty(key)) keys[key] = false; 
         });
 
-        // --- MOBİL TUŞLAR (W,A,S,D Geri Döndü) ---
+        // --- GÜÇLENDİRİLMİŞ MOBİL DOKUNMATİK ALGILAYICI ---
         function toggleMobileControls() {
             let mc = document.getElementById('mobile-controls');
             mc.style.display = (mc.style.display === 'block') ? 'none' : 'block';
@@ -228,14 +242,25 @@
             const bindTouch = (id, keyChar) => {
                 let el = document.getElementById(id);
                 if(!el) return;
-                el.addEventListener('touchstart', (e) => { 
+                
+                const press = (e) => { 
                     e.preventDefault(); 
                     keys[keyChar] = true; 
+                    el.classList.add('active-touch');
                     if(keyChar==='m') showMinimap = !showMinimap; 
                     if(keyChar==='r') openRaceMenu(); 
-                }, {passive: false});
-                el.addEventListener('touchend', (e) => { e.preventDefault(); keys[keyChar] = false; }, {passive: false});
-                el.addEventListener('touchcancel', (e) => { e.preventDefault(); keys[keyChar] = false; }, {passive: false});
+                };
+                
+                const release = (e) => { 
+                    e.preventDefault(); 
+                    keys[keyChar] = false; 
+                    el.classList.remove('active-touch');
+                };
+
+                // Çoklu dokunmayı sorunsuz destekler, takılmaları engeller
+                el.addEventListener('touchstart', press, {passive: false});
+                el.addEventListener('touchend', release, {passive: false});
+                el.addEventListener('touchcancel', release, {passive: false});
             };
             
             bindTouch('btn-w', 'w'); bindTouch('btn-s', 's');
@@ -245,6 +270,8 @@
 
             if(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
                 document.getElementById('mobile-toggle-btn').style.display = 'flex';
+                // Oyuna girince otomatik butonları aç
+                document.getElementById('mobile-controls').style.display = 'block'; 
             }
         }
         setupMobileButtons();
@@ -287,9 +314,8 @@
                 this.x = x; this.y = y; this.width = 44; this.height = 88;
                 this.angle = -Math.PI / 2; this.speed = 0; this.isBot = isBot;
                 
-                // --- HIZ DEĞERLERİ ARTIRILDI ---
-                this.maxSpeed = 9.1; // * 11 = 100 km/h yapar
-                this.acceleration = 0.5; // Hızlanma çok daha iyi
+                this.maxSpeed = 9.1; // 100 km/h
+                this.acceleration = 0.5; 
                 this.friction = 0.95; 
                 
                 this.velX = 0; this.velY = 0; this.img = null;
@@ -354,7 +380,7 @@
             if (this.speed > this.maxSpeed) this.speed = this.maxSpeed;
             if (this.speed < -this.maxSpeed * 0.4) this.speed = -this.maxSpeed * 0.4; 
             
-            let baseTurnSpeed = 0.065; // Dönüşler biraz daha keskinleştirildi
+            let baseTurnSpeed = 0.065; 
             if(Math.abs(this.speed) > 0.5) {
                 let dir = this.speed > 0 ? 1 : -1;
                 let turnSpeed = baseTurnSpeed * (1 - (Math.abs(this.speed) / (this.maxSpeed * 2.5)));
@@ -388,7 +414,6 @@
             bot.update = function() {
                 if (gameState === 'pre_race') return;
                 if (this.inRace && gameState === 'racing') {
-                    // BOT YARIŞ HIZI GÜNCELLENDİ
                     const botMaxRaceSpeed = player.maxSpeed * 0.95; 
                     let targetCP = currentRace.route[this.cpIndex];
                     if (targetCP) {
@@ -664,7 +689,7 @@
                         for(let rs of raceStarters) {
                             if(Math.hypot(player.x - rs.x, player.y - rs.y) < 150) {
                                 nearRace = true; promptUi.style.display = 'block';
-                                promptUi.innerHTML = `<b>SOKAK YARIŞI</b><br>Başlamak için 'E' tuşuna bas`;
+                                promptUi.innerHTML = `<b>SOKAK YARIŞI</b><br>Yarış noktasına geldin, Başlamak için 'E' tuşuna bas.`;
                                 if(keys.e) { keys.e = false; startRaceLogic(rs); }
                                 break;
                             }
