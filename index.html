@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Online Devasa Şehir ve Yarış Oyunu V13</title>
+    <title>Online Devasa Şehir ve Yarış Oyunu V14</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background-color: #111; overflow: hidden; font-family: 'Segoe UI', Tahoma, sans-serif; user-select: none; touch-action: none; }
@@ -34,7 +34,6 @@
         #race-ui { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 140px; font-weight: bold; text-shadow: 5px 5px 0 #ff0000; display: none; z-index: 6; text-align: center; width: 100%; pointer-events: none;}
         #race-result { font-size: 60px; color: gold; display: block; margin-top: 20px; }
 
-        /* YARIŞ DAVET (R) MENÜSÜ */
         #custom-race-menu { position: absolute; top: 10%; left: 10%; width: 80%; height: 80%; background: rgba(0,0,0,0.95); z-index: 25; display: none; flex-direction: column; color: white; padding: 20px; border: 2px solid #00ffcc; border-radius: 10px; box-sizing: border-box; }
         #custom-race-menu h2 { color: #00ffcc; text-align: center; border-bottom: 1px solid #444; padding-bottom: 10px; }
         .player-list-item { display: flex; justify-content: space-between; align-items: center; background: #222; padding: 10px; margin-bottom: 10px; border-radius: 5px; font-size: 20px; }
@@ -42,21 +41,21 @@
         
         #invite-popup { display: none; position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background: #ff3333; padding: 20px; border-radius: 10px; z-index: 30; text-align: center; color: white; font-weight: bold; font-size: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); border: 2px solid white; }
 
-        /* MOBİL KONTROLLER */
+        /* YENİ MOBİL KONTROLLER (JOYSTICK) */
         #mobile-toggle-btn { position: absolute; bottom: 20px; right: 20px; background: #ff3333; border: 3px solid white; color: white; border-radius: 50%; width: 70px; height: 70px; font-size: 30px; display: none; z-index: 40; justify-content: center; align-items: center; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
-        #mobile-controls { display: none; position: absolute; bottom: 10px; left: 0; width: 100%; height: 220px; z-index: 35; pointer-events: none; }
-        .mc-dpad { position: absolute; bottom: 20px; left: 20px; width: 180px; height: 180px; pointer-events: auto; }
+        #mobile-controls { display: none; position: absolute; bottom: 0; left: 0; width: 100%; height: 100%; z-index: 35; pointer-events: none; }
+        
+        /* Joystick Alanı */
+        #joystick-zone { position: absolute; bottom: 40px; left: 40px; width: 160px; height: 160px; background: rgba(255,255,255,0.1); border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; pointer-events: auto; display: flex; justify-content: center; align-items: center; }
+        #joystick-stick { width: 70px; height: 70px; background: #ff3333; border: 2px solid white; border-radius: 50%; box-shadow: 0 0 15px rgba(0,0,0,0.5); pointer-events: none; transform: translate(0px, 0px); transition: 0.1s transform ease-out; }
+
+        /* Aksiyon Butonları Alanı */
         .mc-actions { position: absolute; bottom: 20px; right: 20px; width: 180px; height: 180px; pointer-events: auto; }
         .mc-btn { position: absolute; width: 55px; height: 55px; background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.6); border-radius: 10px; color: white; font-weight: bold; display: flex; justify-content: center; align-items: center; font-size: 20px; user-select: none; }
         .mc-btn:active { background: rgba(255,50,50,0.5); }
         
-        /* D-Pad Yerleşimi */
-        #btn-w { top: 0; left: 62.5px; }
-        #btn-s { bottom: 0; left: 62.5px; }
-        #btn-a { top: 62.5px; left: 0; }
-        #btn-d { top: 62.5px; right: 0; }
-        /* Aksiyon Yerleşimi */
-        #btn-space { bottom: 0; left: 0; width: 80px; height: 80px; border-radius: 50%; font-size: 16px; border: 3px solid #ffaa00; }
+        #btn-space { bottom: 0; left: 0; width: 80px; height: 80px; border-radius: 50%; font-size: 16px; border: 3px solid #ffaa00; background: rgba(255, 170, 0, 0.2); }
+        #btn-space:active { background: rgba(255, 170, 0, 0.6); }
         #btn-e { top: 0; right: 0; background: rgba(0,255,200,0.3); }
         #btn-r { top: 0; left: 0; background: rgba(255,0,255,0.3); }
         #btn-m { bottom: 0; right: 0; background: rgba(100,100,255,0.3); }
@@ -112,9 +111,7 @@
     <!-- R TUŞU YARIŞ MENÜSÜ -->
     <div id="custom-race-menu">
         <h2>ÖZEL YARIŞ OLUŞTUR</h2>
-        <div style="flex: 1; overflow-y: auto; padding: 10px; background: #111; border-radius: 5px;" id="rm-player-list">
-            <!-- Oyuncular buraya gelecek -->
-        </div>
+        <div style="flex: 1; overflow-y: auto; padding: 10px; background: #111; border-radius: 5px;" id="rm-player-list"></div>
         <h3 style="color: gold; margin-top: 20px;">Kabul Eden Sürücüler: <span id="rm-accepted-list" style="color: white; font-weight: normal;">Yok</span></h3>
         <div style="display: flex; justify-content: space-between; margin-top: 10px;">
             <button onclick="startCustomRace()" style="background: #27ae60; flex: 1; margin-right: 10px;">Yarışı Başlat</button>
@@ -122,7 +119,6 @@
         </div>
     </div>
 
-    <!-- DAVET POPUP -->
     <div id="invite-popup">
         <div id="invite-text">Biri seni yarışa davet ediyor!</div>
         <div style="margin-top: 15px;">
@@ -137,12 +133,11 @@
     <!-- MOBİL KONTROLLER -->
     <div id="mobile-toggle-btn" onclick="toggleMobileControls()">📱</div>
     <div id="mobile-controls">
-        <div class="mc-dpad">
-            <div id="btn-w" class="mc-btn">W</div>
-            <div id="btn-s" class="mc-btn">S</div>
-            <div id="btn-a" class="mc-btn">A</div>
-            <div id="btn-d" class="mc-btn">D</div>
+        <!-- Dokunmatik Joystick -->
+        <div id="joystick-zone">
+            <div id="joystick-stick"></div>
         </div>
+        
         <div class="mc-actions">
             <div id="btn-space" class="mc-btn">DRIFT</div>
             <div id="btn-e" class="mc-btn">E</div>
@@ -185,7 +180,6 @@
         let gameState = 'auth'; 
         let showMinimap = false;
 
-        // Özel Yarış Değişkenleri
         let acceptedPlayers = []; 
         let currentInviterId = null;
 
@@ -202,7 +196,6 @@
         window.addEventListener('keydown', e => { 
             let key = e.key.toLowerCase(); if(key===' ') key=' '; 
             if(keys.hasOwnProperty(key)) keys[key] = true; 
-            
             if(key === 'm') showMinimap = !showMinimap;
             if(key === 'r') openRaceMenu();
         });
@@ -211,29 +204,74 @@
             if(keys.hasOwnProperty(key)) keys[key] = false; 
         });
 
-        // MOBİL KONTROL SİSTEMİ
+        // --- GELİŞMİŞ MOBİL JOYSTICK VE BUTON SİSTEMİ ---
         function toggleMobileControls() {
             let mc = document.getElementById('mobile-controls');
-            if(mc.style.display === 'block') {
-                mc.style.display = 'none';
-            } else {
-                mc.style.display = 'block';
-            }
+            mc.style.display = (mc.style.display === 'block') ? 'none' : 'block';
         }
 
         function setupMobileButtons() {
             const bindTouch = (id, keyChar) => {
                 let el = document.getElementById(id);
                 if(!el) return;
-                el.addEventListener('touchstart', (e) => { e.preventDefault(); keys[keyChar] = true; if(keyChar==='m') showMinimap = !showMinimap; if(keyChar==='r') openRaceMenu(); });
-                el.addEventListener('touchend', (e) => { e.preventDefault(); keys[keyChar] = false; });
+                el.addEventListener('touchstart', (e) => { e.preventDefault(); keys[keyChar] = true; if(keyChar==='m') showMinimap = !showMinimap; if(keyChar==='r') openRaceMenu(); }, {passive: false});
+                el.addEventListener('touchend', (e) => { e.preventDefault(); keys[keyChar] = false; }, {passive: false});
             };
-            bindTouch('btn-w', 'w'); bindTouch('btn-s', 's');
-            bindTouch('btn-a', 'a'); bindTouch('btn-d', 'd');
             bindTouch('btn-space', ' '); bindTouch('btn-e', 'e');
             bindTouch('btn-r', 'r'); bindTouch('btn-m', 'm');
             
-            // Eğer mobilden girildiyse toggle butonunu göster
+            // Joystick Mantığı
+            const zone = document.getElementById('joystick-zone');
+            const stick = document.getElementById('joystick-stick');
+            let stickActive = false;
+            let zoneRect = null;
+
+            zone.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                stickActive = true;
+                zoneRect = zone.getBoundingClientRect();
+                stick.style.transition = 'none';
+                handleJoy(e.touches[0]);
+            }, {passive: false});
+
+            zone.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                if(!stickActive) return;
+                handleJoy(e.touches[0]);
+            }, {passive: false});
+
+            const resetJoy = (e) => {
+                e.preventDefault();
+                stickActive = false;
+                stick.style.transition = '0.1s transform ease-out';
+                stick.style.transform = `translate(0px, 0px)`;
+                keys.w = false; keys.s = false; keys.a = false; keys.d = false;
+            };
+            zone.addEventListener('touchend', resetJoy, {passive: false});
+            zone.addEventListener('touchcancel', resetJoy, {passive: false});
+
+            function handleJoy(touch) {
+                let centerX = zoneRect.left + zoneRect.width/2;
+                let centerY = zoneRect.top + zoneRect.height/2;
+                let dx = touch.clientX - centerX;
+                let dy = touch.clientY - centerY;
+                let maxDist = zoneRect.width/2 - 35; // Çubuğun çıkabileceği max sınır
+                
+                let dist = Math.hypot(dx, dy);
+                if(dist > maxDist) {
+                    dx = (dx / dist) * maxDist;
+                    dy = (dy / dist) * maxDist;
+                }
+                stick.style.transform = `translate(${dx}px, ${dy}px)`;
+
+                // Joystick konumunu tuşlara dönüştür
+                let thresh = 15;
+                keys.w = dy < -thresh;
+                keys.s = dy > thresh;
+                keys.a = dx < -thresh;
+                keys.d = dx > thresh;
+            }
+
             if(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
                 document.getElementById('mobile-toggle-btn').style.display = 'flex';
             }
@@ -354,7 +392,7 @@
                     type: 'UPDATE', id: myId,
                     playerInfo: { x: this.x, y: this.y, angle: this.angle, img: this.img, name: playerName, inRace: this.inRace, cpIndex: this.cpIndex }
                 };
-                sendTargetedNetworkData(payload); // Broadcast to all
+                sendTargetedNetworkData(payload); 
             }
         };
 
@@ -445,26 +483,18 @@
             return route;
         }
 
-        // --- YARIŞ MENÜSÜ & DAVET SİSTEMİ (R Tuşu) ---
         function openRaceMenu() {
             if(gameState !== 'freeroam') return;
             document.getElementById('custom-race-menu').style.display = 'flex';
             renderRaceMenu();
-            
-            // Kendimizi listeye ekleyelim
-            if(!acceptedPlayers.includes(myId) && myId) {
-                acceptedPlayers.push(myId);
-            }
+            if(!acceptedPlayers.includes(myId) && myId) { acceptedPlayers.push(myId); }
             updateAcceptedUI();
         }
 
-        function closeRaceMenu() {
-            document.getElementById('custom-race-menu').style.display = 'none';
-        }
+        function closeRaceMenu() { document.getElementById('custom-race-menu').style.display = 'none'; }
 
         function renderRaceMenu() {
-            let listHTML = "";
-            let count = 0;
+            let listHTML = ""; let count = 0;
             Object.entries(otherPlayers).forEach(([id, p]) => {
                 count++;
                 listHTML += `
@@ -477,16 +507,11 @@
             document.getElementById('rm-player-list').innerHTML = listHTML;
         }
 
-        function sendInvite(targetId) {
-            sendTargetedNetworkData({ type: 'RACE_INVITE', targetId: targetId, senderName: playerName, senderId: myId });
-            alert("Davet gönderildi!");
-        }
+        function sendInvite(targetId) { sendTargetedNetworkData({ type: 'RACE_INVITE', targetId: targetId, senderName: playerName, senderId: myId }); alert("Davet gönderildi!"); }
 
         function acceptInvite() {
             document.getElementById('invite-popup').style.display = 'none';
-            if(currentInviterId) {
-                sendTargetedNetworkData({ type: 'RACE_ACCEPT', targetId: currentInviterId, senderId: myId, senderName: playerName });
-            }
+            if(currentInviterId) { sendTargetedNetworkData({ type: 'RACE_ACCEPT', targetId: currentInviterId, senderId: myId, senderName: playerName }); }
         }
 
         function updateAcceptedUI() {
@@ -499,32 +524,18 @@
         }
 
         function startCustomRace() {
-            if(acceptedPlayers.length === 0) {
-                alert("Yarışacak kimse yok!"); return;
-            }
-            // Rastgele bir başlangıç noktası seç
+            if(acceptedPlayers.length === 0) { alert("Yarışacak kimse yok!"); return; }
             let randomStart = intersections[Math.floor(Math.random() * intersections.length)];
             let route = generateRoute(randomStart.gridX, randomStart.gridY);
-            
-            let payload = {
-                type: 'RACE_START',
-                route: route,
-                starter: randomStart,
-                acceptedPlayers: acceptedPlayers, // Sadece kabul edenler için
-                sender: myId
-            };
-            sendTargetedNetworkData(payload); // Herkese yolla
-            startRaceLogic(randomStart, true, route, acceptedPlayers); // Kendimiz için başlat
+            let payload = { type: 'RACE_START', route: route, starter: randomStart, acceptedPlayers: acceptedPlayers, sender: myId };
+            sendTargetedNetworkData(payload); 
+            startRaceLogic(randomStart, true, route, acceptedPlayers); 
             closeRaceMenu();
-            acceptedPlayers = [myId]; // Temizle
+            acceptedPlayers = [myId]; 
         }
 
-
-        // --- YARIŞ BAŞLATMA VE BİTİRME (PvP Optimize Edildi) ---
         function startRaceLogic(starter, isRemote = false, remoteRoute = null, accPlayers = null) {
-            // Eğer özel yarışsa ve davetliler listesinde yoksak GİRMEYİZ
             if (accPlayers && myId && !accPlayers.includes(myId)) return;
-
             gameState = 'pre_race';
             document.getElementById('interaction-prompt').style.display = 'none';
             document.getElementById('checkpoint-ui').style.display = 'block';
@@ -549,11 +560,7 @@
             player.angle = startAngle; 
             player.speed = 0; player.velX = 0; player.velY = 0; player.cpIndex = 0; player.inRace = true;
 
-            currentRace.racers = [player];
-
-            // BOT YÖNETİMİ: EĞER KİMSE YOKSA BOT EKLENİR
             let isOnlineRace = (accPlayers && accPlayers.length > 1) || (!accPlayers && Object.keys(otherPlayers).length > 0);
-            
             if (!isOnlineRace) {
                 for(let i=0; i<3; i++) {
                     let rBot = bots[i];
@@ -586,48 +593,36 @@
             cdText.style.color = color;
             resText.innerText = "";
             
-            setTimeout(() => {
-                raceUI.style.display = 'none'; gameState = 'freeroam';
-                player.inRace = false;
-                bots.forEach(b => b.inRace = false);
-            }, 5000);
+            setTimeout(() => { raceUI.style.display = 'none'; gameState = 'freeroam'; player.inRace = false; bots.forEach(b => b.inRace = false); }, 5000);
         }
 
         function checkRaceProgress() {
             if(gameState !== 'racing') return;
-            
             if (player.cpIndex < currentRace.route.length) {
                 let targetCP = currentRace.route[player.cpIndex];
                 if (Math.hypot(player.x - targetCP.x, player.y - targetCP.y) < 180) { 
                     player.cpIndex++;
                     document.getElementById('cp-display').innerText = `${player.cpIndex} / ${currentRace.route.length}`;
-                    
-                    // EĞER İLK BİZ BİTİRDİYSEK
                     if (player.cpIndex >= currentRace.route.length) {
                         endRace("KAZANDIN!", "gold");
-                        sendTargetedNetworkData({ type: 'RACE_FINISHED', winnerName: playerName }); // Ağa ilet
+                        sendTargetedNetworkData({ type: 'RACE_FINISHED', winnerName: playerName }); 
                     }
                 }
             }
-
-            // Çevrimdışı (Bot) Bitişi Kontrolü
             bots.forEach(b => {
                 if(b.inRace && b.cpIndex < currentRace.route.length) {
                     let targetCP = currentRace.route[b.cpIndex];
                     if (Math.hypot(b.x - targetCP.x, b.y - targetCP.y) < 180) { 
                         b.cpIndex++;
-                        if (b.cpIndex >= currentRace.route.length) {
-                            endRace("KAYBETTİN!\nBOT KAZANDI", "gray");
-                        }
+                        if (b.cpIndex >= currentRace.route.length) { endRace("KAYBETTİN!\nBOT KAZANDI", "gray"); }
                     }
                 }
             });
         }
 
-        // --- CANLI SIRALAMA MANTIĞI ---
         function getDistToNextCp(x, y, cpIndex) {
             if(cpIndex >= currentRace.route.length) return 0;
-            let target = currentRace.route[currentRace.route.length - 1]; // Hedef bitiş noktası
+            let target = currentRace.route[currentRace.route.length - 1]; 
             return Math.hypot(x - target.x, y - target.y);
         }
 
@@ -635,18 +630,12 @@
             if(gameState !== 'racing') return;
             let racers = [];
             racers.push({ name: playerName, cpIndex: player.cpIndex, dist: getDistToNextCp(player.x, player.y, player.cpIndex), isMe: true });
-            
-            Object.values(otherPlayers).forEach(op => {
-                if(op.inRace) racers.push({ name: op.name, cpIndex: op.cpIndex, dist: getDistToNextCp(op.x, op.y, op.cpIndex), isMe: false, isBot: false });
-            });
-
-            bots.forEach((b, i) => {
-                if(b.inRace) racers.push({ name: "Bot " + (i+1), cpIndex: b.cpIndex, dist: getDistToNextCp(b.x, b.y, b.cpIndex), isMe: false, isBot: true });
-            });
+            Object.values(otherPlayers).forEach(op => { if(op.inRace) racers.push({ name: op.name, cpIndex: op.cpIndex, dist: getDistToNextCp(op.x, op.y, op.cpIndex), isMe: false, isBot: false }); });
+            bots.forEach((b, i) => { if(b.inRace) racers.push({ name: "Bot " + (i+1), cpIndex: b.cpIndex, dist: getDistToNextCp(b.x, b.y, b.cpIndex), isMe: false, isBot: true }); });
 
             racers.sort((a, b) => {
                 if(b.cpIndex !== a.cpIndex) return b.cpIndex - a.cpIndex;
-                return a.dist - b.dist; // Checkpointler eşitse, hedefe yakınlık!
+                return a.dist - b.dist; 
             });
 
             let html = "";
@@ -665,30 +654,50 @@
             ctx.fillText(name, x, y - 42);
         }
 
-        function gameLoop() {
-            if (gameState === 'freeroam' || gameState === 'pre_race' || gameState === 'racing' || gameState === 'post_race') {
-                player.update();
-                bots.forEach(bot => bot.update());
-                
-                checkRaceProgress();
-                updateLeaderboard(); 
+        // --- FIXED TIMESTEP EKLENDİ (Her Ekranda Aynı Hız) ---
+        let lastTime = 0;
+        let accumulator = 0;
+        const timeStep = 1000 / 60; // Saniyede tam 60 hesaplama!
 
-                document.getElementById('speed-display').innerText = Math.abs(Math.floor(player.speed * 11));
+        function gameLoop(timestamp) {
+            if (!lastTime) lastTime = timestamp;
+            let dt = timestamp - lastTime;
+            lastTime = timestamp;
+            
+            // Eğer sekme arka planda kalırsa oyun sapıtmasın diye sınır koyuyoruz
+            if (dt > 100) dt = 100; 
+            accumulator += dt;
 
-                const promptUi = document.getElementById('interaction-prompt');
-                if(gameState === 'freeroam') {
-                    let nearRace = false;
-                    for(let rs of raceStarters) {
-                        if(Math.hypot(player.x - rs.x, player.y - rs.y) < 150) {
-                            nearRace = true; promptUi.style.display = 'block';
-                            promptUi.innerHTML = `<b>SOKAK YARIŞI</b><br>Başlamak için 'E' tuşuna bas`;
-                            if(keys.e) { keys.e = false; startRaceLogic(rs); }
-                            break;
+            // FİZİK VE OYUN MANTIĞI (Hz'den bağımsız, saniyede 60 kez çalışır)
+            while (accumulator >= timeStep) {
+                if (gameState === 'freeroam' || gameState === 'pre_race' || gameState === 'racing' || gameState === 'post_race') {
+                    player.update();
+                    bots.forEach(bot => bot.update());
+                    
+                    checkRaceProgress();
+                    updateLeaderboard(); 
+
+                    document.getElementById('speed-display').innerText = Math.abs(Math.floor(player.speed * 11));
+
+                    const promptUi = document.getElementById('interaction-prompt');
+                    if(gameState === 'freeroam') {
+                        let nearRace = false;
+                        for(let rs of raceStarters) {
+                            if(Math.hypot(player.x - rs.x, player.y - rs.y) < 150) {
+                                nearRace = true; promptUi.style.display = 'block';
+                                promptUi.innerHTML = `<b>SOKAK YARIŞI</b><br>Başlamak için 'E' tuşuna bas`;
+                                if(keys.e) { keys.e = false; startRaceLogic(rs); }
+                                break;
+                            }
                         }
+                        if(!nearRace) promptUi.style.display = 'none';
                     }
-                    if(!nearRace) promptUi.style.display = 'none';
                 }
+                accumulator -= timeStep;
+            }
 
+            // ÇİZİM (Monitörün Hz hızında çalışır, oyun akıcı görünür)
+            if (gameState === 'freeroam' || gameState === 'pre_race' || gameState === 'racing' || gameState === 'post_race') {
                 camera.x = player.x - canvas.width / 2; camera.y = player.y - canvas.height / 2;
 
                 ctx.fillStyle = '#2c3e50'; ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -793,34 +802,22 @@
             requestAnimationFrame(gameLoop);
         }
 
-        // --- AĞ YÖNETİMİ ---
         function sendTargetedNetworkData(payload) {
-            // Eğer host isek, hedef belliyse sadece ona, değilse herkese gönder
             if (isHost) {
-                if(payload.targetId && connections[payload.targetId] && connections[payload.targetId].open) {
-                    connections[payload.targetId].send(payload);
-                } else if (!payload.targetId) {
-                    Object.values(connections).forEach(c => { if(c.open) c.send(payload); });
-                }
+                if(payload.targetId && connections[payload.targetId] && connections[payload.targetId].open) { connections[payload.targetId].send(payload); } 
+                else if (!payload.targetId) { Object.values(connections).forEach(c => { if(c.open) c.send(payload); }); }
             } 
-            // İstemci isek hosta yolla, o halletsin
-            else if (hostConnection && hostConnection.open) {
-                hostConnection.send(payload);
-            }
+            else if (hostConnection && hostConnection.open) { hostConnection.send(payload); }
         }
 
         function handleNetworkData(data, senderId) {
-            // İstemcinin host üzerinden başkasına iletmek istediği bir veri ise (Yönlendirme)
             if (isHost && data.targetId && data.targetId !== myId) {
                 if (connections[data.targetId] && connections[data.targetId].open) connections[data.targetId].send(data);
                 return;
             }
-
             if (data.type === 'UPDATE') {
                 otherPlayers[data.id] = data.playerInfo;
-                if (isHost) {
-                    Object.values(connections).forEach(c => { if (c.open && c.peer !== data.id && c.peer !== senderId) c.send(data); });
-                }
+                if (isHost) { Object.values(connections).forEach(c => { if (c.open && c.peer !== data.id && c.peer !== senderId) c.send(data); }); }
             } 
             else if (data.type === 'RACE_INVITE' && data.targetId === myId) {
                 document.getElementById('invite-popup').style.display = 'block';
@@ -828,22 +825,15 @@
                 currentInviterId = data.senderId;
             }
             else if (data.type === 'RACE_ACCEPT' && data.targetId === myId) {
-                if(!acceptedPlayers.includes(data.senderId)) {
-                    acceptedPlayers.push(data.senderId);
-                    updateAcceptedUI();
-                }
+                if(!acceptedPlayers.includes(data.senderId)) { acceptedPlayers.push(data.senderId); updateAcceptedUI(); }
             }
             else if (data.type === 'RACE_START') {
                 if (!player.inRace) startRaceLogic(data.starter, true, data.route, data.acceptedPlayers);
-                if (isHost) {
-                    Object.values(connections).forEach(c => { if (c.open && c.peer !== senderId) c.send(data); });
-                }
+                if (isHost) { Object.values(connections).forEach(c => { if (c.open && c.peer !== senderId) c.send(data); }); }
             }
             else if (data.type === 'RACE_FINISHED') {
                 if (player.inRace) endRace("KAYBETTİN!\n" + data.winnerName.toUpperCase() + " KAZANDI", "red");
-                if (isHost) {
-                    Object.values(connections).forEach(c => { if (c.open && c.peer !== senderId) c.send(data); });
-                }
+                if (isHost) { Object.values(connections).forEach(c => { if (c.open && c.peer !== senderId) c.send(data); }); }
             }
         }
 
@@ -903,7 +893,7 @@
         }
 
         window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
-        gameLoop();
+        requestAnimationFrame(gameLoop); // İLK ÇAĞRI DÜZELTİLDİ
     </script>
 </body>
 </html>
