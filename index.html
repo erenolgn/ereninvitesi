@@ -2,14 +2,14 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Online Devasa Şehir ve Yarış Oyunu V12</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Online Devasa Şehir ve Yarış Oyunu V13</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background-color: #111; overflow: hidden; font-family: 'Segoe UI', Tahoma, sans-serif; user-select: none; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background-color: #111; overflow: hidden; font-family: 'Segoe UI', Tahoma, sans-serif; user-select: none; touch-action: none; }
         canvas { display: block; }
         
-        .overlay-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; z-index: 10; }
+        .overlay-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; z-index: 50; }
         
         input[type="text"] { padding: 15px; font-size: 20px; border-radius: 8px; border: 2px solid #555; background: #222; color: white; margin-bottom: 20px; width: 300px; text-align: center; }
         button { padding: 15px 30px; font-size: 20px; border-radius: 8px; border: none; background: #ff3333; color: white; cursor: pointer; font-weight: bold; transition: 0.2s; margin: 5px; }
@@ -20,20 +20,46 @@
         .car-card:hover { transform: scale(1.05); border-color: #ff3333; background: #444; }
         .car-card img { width: 64px; height: 128px; object-fit: contain; }
         
-        .lobby-box { background: #222; padding: 30px; border-radius: 10px; text-align: center; margin: 10px; border: 1px solid #444; width: 400px; }
+        .lobby-box { background: #222; padding: 30px; border-radius: 10px; text-align: center; margin: 10px; border: 1px solid #444; width: 400px; max-width: 90%; }
         .code-display { font-size: 24px; color: gold; margin: 15px 0; font-family: monospace; background: #000; padding: 10px; user-select: all; cursor: copy; }
 
-        #ui { position: absolute; top: 20px; left: 20px; color: white; font-size: 24px; font-weight: bold; text-shadow: 2px 2px 0 #000; display: none; z-index: 5; }
+        #ui { position: absolute; top: 20px; left: 20px; color: white; font-size: 24px; font-weight: bold; text-shadow: 2px 2px 0 #000; display: none; z-index: 5; pointer-events: none;}
         #checkpoint-ui { position: absolute; top: 20px; right: 20px; color: #ff3333; font-size: 28px; font-weight: bold; text-shadow: 2px 2px 0 #000; display: none; z-index: 5; }
         
-        /* CANLI SIRALAMA EKRANI */
         #leaderboard-ui { position: absolute; top: 80px; right: 20px; background: rgba(0,0,0,0.85); color: white; padding: 15px; border-radius: 8px; border: 2px solid #ff3333; display: none; z-index: 5; font-size: 18px; min-width: 220px; box-shadow: 4px 4px 0 rgba(0,0,0,0.5); }
         #leaderboard-ui h3 { margin: 0 0 10px 0; color: #00ffcc; text-align: center; font-size: 22px; border-bottom: 2px solid #444; padding-bottom: 5px; }
         #leaderboard-list div { padding: 5px 0; font-weight: bold; }
 
         #interaction-prompt { position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: #ff3333; padding: 15px 30px; border-radius: 8px; font-size: 22px; font-weight: bold; display: none; z-index: 5; border: 2px solid #ff3333; text-align: center; }
-        #race-ui { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 140px; font-weight: bold; text-shadow: 5px 5px 0 #ff0000; display: none; z-index: 6; text-align: center; width: 100%; }
+        #race-ui { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 140px; font-weight: bold; text-shadow: 5px 5px 0 #ff0000; display: none; z-index: 6; text-align: center; width: 100%; pointer-events: none;}
         #race-result { font-size: 60px; color: gold; display: block; margin-top: 20px; }
+
+        /* YARIŞ DAVET (R) MENÜSÜ */
+        #custom-race-menu { position: absolute; top: 10%; left: 10%; width: 80%; height: 80%; background: rgba(0,0,0,0.95); z-index: 25; display: none; flex-direction: column; color: white; padding: 20px; border: 2px solid #00ffcc; border-radius: 10px; box-sizing: border-box; }
+        #custom-race-menu h2 { color: #00ffcc; text-align: center; border-bottom: 1px solid #444; padding-bottom: 10px; }
+        .player-list-item { display: flex; justify-content: space-between; align-items: center; background: #222; padding: 10px; margin-bottom: 10px; border-radius: 5px; font-size: 20px; }
+        .player-list-item button { font-size: 16px; padding: 10px 15px; }
+        
+        #invite-popup { display: none; position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background: #ff3333; padding: 20px; border-radius: 10px; z-index: 30; text-align: center; color: white; font-weight: bold; font-size: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); border: 2px solid white; }
+
+        /* MOBİL KONTROLLER */
+        #mobile-toggle-btn { position: absolute; bottom: 20px; right: 20px; background: #ff3333; border: 3px solid white; color: white; border-radius: 50%; width: 70px; height: 70px; font-size: 30px; display: none; z-index: 40; justify-content: center; align-items: center; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        #mobile-controls { display: none; position: absolute; bottom: 10px; left: 0; width: 100%; height: 220px; z-index: 35; pointer-events: none; }
+        .mc-dpad { position: absolute; bottom: 20px; left: 20px; width: 180px; height: 180px; pointer-events: auto; }
+        .mc-actions { position: absolute; bottom: 20px; right: 20px; width: 180px; height: 180px; pointer-events: auto; }
+        .mc-btn { position: absolute; width: 55px; height: 55px; background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.6); border-radius: 10px; color: white; font-weight: bold; display: flex; justify-content: center; align-items: center; font-size: 20px; user-select: none; }
+        .mc-btn:active { background: rgba(255,50,50,0.5); }
+        
+        /* D-Pad Yerleşimi */
+        #btn-w { top: 0; left: 62.5px; }
+        #btn-s { bottom: 0; left: 62.5px; }
+        #btn-a { top: 62.5px; left: 0; }
+        #btn-d { top: 62.5px; right: 0; }
+        /* Aksiyon Yerleşimi */
+        #btn-space { bottom: 0; left: 0; width: 80px; height: 80px; border-radius: 50%; font-size: 16px; border: 3px solid #ffaa00; }
+        #btn-e { top: 0; right: 0; background: rgba(0,255,200,0.3); }
+        #btn-r { top: 0; left: 0; background: rgba(255,0,255,0.3); }
+        #btn-m { bottom: 0; right: 0; background: rgba(100,100,255,0.3); }
     </style>
 </head>
 <body>
@@ -46,13 +72,13 @@
 
     <div id="menu-screen" class="overlay-screen" style="display: none;">
         <h1>ARACINI SEÇ</h1>
-        <p style="color:#aaa; font-size: 18px;">Hareket: W, A, S, D | Drift: BOŞLUK | Etkileşim: E | Harita: M</p>
+        <p style="color:#aaa; font-size: 18px;">Hareket: W, A, S, D | Drift: BOŞLUK | Etkileşim: E | Harita: M | Yarış Menüsü: R</p>
         <div class="car-container" id="car-list"></div>
     </div>
 
     <div id="lobby-screen" class="overlay-screen" style="display: none;">
         <h1>ONLİNE LOBİ</h1>
-        <div style="display: flex; gap: 20px;">
+        <div style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;">
             <div class="lobby-box">
                 <h2>Sunucu Ol (Oda Kur)</h2>
                 <button onclick="startHost()">Kodu Oluştur</button>
@@ -72,20 +98,58 @@
 
     <div id="ui">
         HIZ: <span id="speed-display">0</span> km/h <br> 
-        <span style="font-size:16px; color:#aaa">Harita için 'M' ye bas</span><br>
+        <span style="font-size:16px; color:#aaa">Harita için M, Yarış Kurmak için R</span><br>
         <span style="font-size:16px; color:#00ffcc; display:none;" id="ui-room-code">Oda Kodu: -</span>
     </div>
     
     <div id="checkpoint-ui">CHECKPOINT: <span id="cp-display">0 / 0</span></div>
     
-    <!-- SIRALAMA PANELİ -->
     <div id="leaderboard-ui">
-        <h3>SIRALAMA</h3>
+        <h3>CANLI SIRALAMA</h3>
         <div id="leaderboard-list"></div>
+    </div>
+
+    <!-- R TUŞU YARIŞ MENÜSÜ -->
+    <div id="custom-race-menu">
+        <h2>ÖZEL YARIŞ OLUŞTUR</h2>
+        <div style="flex: 1; overflow-y: auto; padding: 10px; background: #111; border-radius: 5px;" id="rm-player-list">
+            <!-- Oyuncular buraya gelecek -->
+        </div>
+        <h3 style="color: gold; margin-top: 20px;">Kabul Eden Sürücüler: <span id="rm-accepted-list" style="color: white; font-weight: normal;">Yok</span></h3>
+        <div style="display: flex; justify-content: space-between; margin-top: 10px;">
+            <button onclick="startCustomRace()" style="background: #27ae60; flex: 1; margin-right: 10px;">Yarışı Başlat</button>
+            <button onclick="closeRaceMenu()" style="background: #555; flex: 1;">Kapat</button>
+        </div>
+    </div>
+
+    <!-- DAVET POPUP -->
+    <div id="invite-popup">
+        <div id="invite-text">Biri seni yarışa davet ediyor!</div>
+        <div style="margin-top: 15px;">
+            <button onclick="acceptInvite()" style="background: #27ae60;">Kabul Et</button>
+            <button onclick="document.getElementById('invite-popup').style.display='none'" style="background: #333;">Reddet</button>
+        </div>
     </div>
 
     <div id="interaction-prompt"></div>
     <div id="race-ui"><span id="countdown-text">3</span><br><span id="race-result"></span></div>
+
+    <!-- MOBİL KONTROLLER -->
+    <div id="mobile-toggle-btn" onclick="toggleMobileControls()">📱</div>
+    <div id="mobile-controls">
+        <div class="mc-dpad">
+            <div id="btn-w" class="mc-btn">W</div>
+            <div id="btn-s" class="mc-btn">S</div>
+            <div id="btn-a" class="mc-btn">A</div>
+            <div id="btn-d" class="mc-btn">D</div>
+        </div>
+        <div class="mc-actions">
+            <div id="btn-space" class="mc-btn">DRIFT</div>
+            <div id="btn-e" class="mc-btn">E</div>
+            <div id="btn-r" class="mc-btn">R</div>
+            <div id="btn-m" class="mc-btn">M</div>
+        </div>
+    </div>
 
     <canvas id="gameCanvas"></canvas>
 
@@ -121,6 +185,10 @@
         let gameState = 'auth'; 
         let showMinimap = false;
 
+        // Özel Yarış Değişkenleri
+        let acceptedPlayers = []; 
+        let currentInviterId = null;
+
         let peer = null;
         let myId = null;
         let isHost = false;
@@ -129,16 +197,48 @@
         
         let otherPlayers = {}; 
 
-        const keys = { w: false, a: false, s: false, d: false, ' ': false, e: false };
+        const keys = { w: false, a: false, s: false, d: false, ' ': false, e: false, r: false };
+        
         window.addEventListener('keydown', e => { 
             let key = e.key.toLowerCase(); if(key===' ') key=' '; 
             if(keys.hasOwnProperty(key)) keys[key] = true; 
+            
             if(key === 'm') showMinimap = !showMinimap;
+            if(key === 'r') openRaceMenu();
         });
         window.addEventListener('keyup', e => { 
             let key = e.key.toLowerCase(); if(key===' ') key=' '; 
             if(keys.hasOwnProperty(key)) keys[key] = false; 
         });
+
+        // MOBİL KONTROL SİSTEMİ
+        function toggleMobileControls() {
+            let mc = document.getElementById('mobile-controls');
+            if(mc.style.display === 'block') {
+                mc.style.display = 'none';
+            } else {
+                mc.style.display = 'block';
+            }
+        }
+
+        function setupMobileButtons() {
+            const bindTouch = (id, keyChar) => {
+                let el = document.getElementById(id);
+                if(!el) return;
+                el.addEventListener('touchstart', (e) => { e.preventDefault(); keys[keyChar] = true; if(keyChar==='m') showMinimap = !showMinimap; if(keyChar==='r') openRaceMenu(); });
+                el.addEventListener('touchend', (e) => { e.preventDefault(); keys[keyChar] = false; });
+            };
+            bindTouch('btn-w', 'w'); bindTouch('btn-s', 's');
+            bindTouch('btn-a', 'a'); bindTouch('btn-d', 'd');
+            bindTouch('btn-space', ' '); bindTouch('btn-e', 'e');
+            bindTouch('btn-r', 'r'); bindTouch('btn-m', 'm');
+            
+            // Eğer mobilden girildiyse toggle butonunu göster
+            if(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+                document.getElementById('mobile-toggle-btn').style.display = 'flex';
+            }
+        }
+        setupMobileButtons();
 
         const mapBlocks = 32; 
         const roadWidth = 320; 
@@ -252,14 +352,9 @@
             if (peer && myId) {
                 let payload = {
                     type: 'UPDATE', id: myId,
-                    // inRace ve cpIndex verileri ONLINE'a aktarılıyor
                     playerInfo: { x: this.x, y: this.y, angle: this.angle, img: this.img, name: playerName, inRace: this.inRace, cpIndex: this.cpIndex }
                 };
-                if (isHost) {
-                    Object.values(connections).forEach(c => { if(c.open) c.send(payload); });
-                } else if (hostConnection && hostConnection.open) {
-                    hostConnection.send(payload);
-                }
+                sendTargetedNetworkData(payload); // Broadcast to all
             }
         };
 
@@ -350,11 +445,90 @@
             return route;
         }
 
-        function startRaceLogic(starter, isRemote = false, remoteRoute = null) {
+        // --- YARIŞ MENÜSÜ & DAVET SİSTEMİ (R Tuşu) ---
+        function openRaceMenu() {
+            if(gameState !== 'freeroam') return;
+            document.getElementById('custom-race-menu').style.display = 'flex';
+            renderRaceMenu();
+            
+            // Kendimizi listeye ekleyelim
+            if(!acceptedPlayers.includes(myId) && myId) {
+                acceptedPlayers.push(myId);
+            }
+            updateAcceptedUI();
+        }
+
+        function closeRaceMenu() {
+            document.getElementById('custom-race-menu').style.display = 'none';
+        }
+
+        function renderRaceMenu() {
+            let listHTML = "";
+            let count = 0;
+            Object.entries(otherPlayers).forEach(([id, p]) => {
+                count++;
+                listHTML += `
+                <div class="player-list-item">
+                    <span>🚗 ${p.name}</span>
+                    <button onclick="sendInvite('${id}')" style="background: #ff9900;">Davet Et</button>
+                </div>`;
+            });
+            if(count === 0) listHTML = "<p style='text-align:center; color:#aaa;'>Sunucuda başka oyuncu yok.</p>";
+            document.getElementById('rm-player-list').innerHTML = listHTML;
+        }
+
+        function sendInvite(targetId) {
+            sendTargetedNetworkData({ type: 'RACE_INVITE', targetId: targetId, senderName: playerName, senderId: myId });
+            alert("Davet gönderildi!");
+        }
+
+        function acceptInvite() {
+            document.getElementById('invite-popup').style.display = 'none';
+            if(currentInviterId) {
+                sendTargetedNetworkData({ type: 'RACE_ACCEPT', targetId: currentInviterId, senderId: myId, senderName: playerName });
+            }
+        }
+
+        function updateAcceptedUI() {
+            let names = [];
+            acceptedPlayers.forEach(id => {
+                if(id === myId) names.push(playerName);
+                else if(otherPlayers[id]) names.push(otherPlayers[id].name);
+            });
+            document.getElementById('rm-accepted-list').innerText = names.length > 0 ? names.join(", ") : "Yok";
+        }
+
+        function startCustomRace() {
+            if(acceptedPlayers.length === 0) {
+                alert("Yarışacak kimse yok!"); return;
+            }
+            // Rastgele bir başlangıç noktası seç
+            let randomStart = intersections[Math.floor(Math.random() * intersections.length)];
+            let route = generateRoute(randomStart.gridX, randomStart.gridY);
+            
+            let payload = {
+                type: 'RACE_START',
+                route: route,
+                starter: randomStart,
+                acceptedPlayers: acceptedPlayers, // Sadece kabul edenler için
+                sender: myId
+            };
+            sendTargetedNetworkData(payload); // Herkese yolla
+            startRaceLogic(randomStart, true, route, acceptedPlayers); // Kendimiz için başlat
+            closeRaceMenu();
+            acceptedPlayers = [myId]; // Temizle
+        }
+
+
+        // --- YARIŞ BAŞLATMA VE BİTİRME (PvP Optimize Edildi) ---
+        function startRaceLogic(starter, isRemote = false, remoteRoute = null, accPlayers = null) {
+            // Eğer özel yarışsa ve davetliler listesinde yoksak GİRMEYİZ
+            if (accPlayers && myId && !accPlayers.includes(myId)) return;
+
             gameState = 'pre_race';
             document.getElementById('interaction-prompt').style.display = 'none';
             document.getElementById('checkpoint-ui').style.display = 'block';
-            document.getElementById('leaderboard-ui').style.display = 'block'; // Sıralamayı göster
+            document.getElementById('leaderboard-ui').style.display = 'block'; 
             
             const raceUI = document.getElementById('race-ui'); const cdText = document.getElementById('countdown-text');
             const resText = document.getElementById('race-result');
@@ -363,9 +537,8 @@
             if(isRemote) currentRace.route = remoteRoute; 
             else {
                 currentRace.route = generateRoute(starter.gridX, starter.gridY);
-                let payload = { type: 'RACE_START', route: currentRace.route, starter: starter, sender: myId };
-                if (isHost) Object.values(connections).forEach(c => { if(c.open) c.send(payload); });
-                else if (hostConnection) hostConnection.send(payload);
+                let payload = { type: 'RACE_START', route: currentRace.route, starter: starter, sender: myId, acceptedPlayers: null };
+                sendTargetedNetworkData(payload);
             }
 
             document.getElementById('cp-display').innerText = `0 / ${currentRace.route.length}`;
@@ -376,8 +549,10 @@
             player.angle = startAngle; 
             player.speed = 0; player.velX = 0; player.velY = 0; player.cpIndex = 0; player.inRace = true;
 
-            // BOT YÖNETİMİ: SADECE KİMSE YOKSA BOT EKLENİR (PvP İÇİN)
-            let isOnlineRace = Object.keys(otherPlayers).length > 0;
+            currentRace.racers = [player];
+
+            // BOT YÖNETİMİ: EĞER KİMSE YOKSA BOT EKLENİR
+            let isOnlineRace = (accPlayers && accPlayers.length > 1) || (!accPlayers && Object.keys(otherPlayers).length > 0);
             
             if (!isOnlineRace) {
                 for(let i=0; i<3; i++) {
@@ -397,7 +572,6 @@
             }, 1000);
         }
 
-        // --- YARIŞ BİTİRME FONKSİYONU ---
         function endRace(msg, color) {
             if(gameState === 'post_race') return;
             gameState = 'post_race'; 
@@ -419,35 +593,24 @@
             }, 5000);
         }
 
-        function getDistToNextCp(x, y, cpIndex) {
-            if(cpIndex >= currentRace.route.length) return 0;
-            let target = currentRace.route[cpIndex];
-            return Math.hypot(x - target.x, y - target.y);
-        }
-
         function checkRaceProgress() {
             if(gameState !== 'racing') return;
             
-            // Bizim (Oyuncunun) Kontrolü
             if (player.cpIndex < currentRace.route.length) {
                 let targetCP = currentRace.route[player.cpIndex];
                 if (Math.hypot(player.x - targetCP.x, player.y - targetCP.y) < 180) { 
                     player.cpIndex++;
                     document.getElementById('cp-display').innerText = `${player.cpIndex} / ${currentRace.route.length}`;
+                    
+                    // EĞER İLK BİZ BİTİRDİYSEK
                     if (player.cpIndex >= currentRace.route.length) {
                         endRace("KAZANDIN!", "gold");
+                        sendTargetedNetworkData({ type: 'RACE_FINISHED', winnerName: playerName }); // Ağa ilet
                     }
                 }
             }
 
-            // Online Arkadaşların Kontrolü
-            Object.values(otherPlayers).forEach(op => {
-                if (op.inRace && op.cpIndex >= currentRace.route.length) {
-                    endRace("KAYBETTİN!\n" + op.name.toUpperCase() + " KAZANDI", "red");
-                }
-            });
-
-            // Botların Kontrolü (Sadece offline isen çalışır)
+            // Çevrimdışı (Bot) Bitişi Kontrolü
             bots.forEach(b => {
                 if(b.inRace && b.cpIndex < currentRace.route.length) {
                     let targetCP = currentRace.route[b.cpIndex];
@@ -461,35 +624,31 @@
             });
         }
 
-        // --- SIRALAMA GÜNCELLEME SİSTEMİ ---
+        // --- CANLI SIRALAMA MANTIĞI ---
+        function getDistToNextCp(x, y, cpIndex) {
+            if(cpIndex >= currentRace.route.length) return 0;
+            let target = currentRace.route[currentRace.route.length - 1]; // Hedef bitiş noktası
+            return Math.hypot(x - target.x, y - target.y);
+        }
+
         function updateLeaderboard() {
             if(gameState !== 'racing') return;
             let racers = [];
-
-            // Kendimiz
             racers.push({ name: playerName, cpIndex: player.cpIndex, dist: getDistToNextCp(player.x, player.y, player.cpIndex), isMe: true });
-
-            // Online Arkadaşlar
+            
             Object.values(otherPlayers).forEach(op => {
-                if(op.inRace) {
-                    racers.push({ name: op.name, cpIndex: op.cpIndex, dist: getDistToNextCp(op.x, op.y, op.cpIndex), isMe: false, isBot: false });
-                }
+                if(op.inRace) racers.push({ name: op.name, cpIndex: op.cpIndex, dist: getDistToNextCp(op.x, op.y, op.cpIndex), isMe: false, isBot: false });
             });
 
-            // Botlar
             bots.forEach((b, i) => {
-                if(b.inRace) {
-                    racers.push({ name: "Bot " + (i+1), cpIndex: b.cpIndex, dist: getDistToNextCp(b.x, b.y, b.cpIndex), isMe: false, isBot: true });
-                }
+                if(b.inRace) racers.push({ name: "Bot " + (i+1), cpIndex: b.cpIndex, dist: getDistToNextCp(b.x, b.y, b.cpIndex), isMe: false, isBot: true });
             });
 
-            // CP'ye göre sırala. CP eşitse sonraki CP'ye uzaklığa göre sırala
             racers.sort((a, b) => {
                 if(b.cpIndex !== a.cpIndex) return b.cpIndex - a.cpIndex;
-                return a.dist - b.dist; // Daha yakın olan öne geçer
+                return a.dist - b.dist; // Checkpointler eşitse, hedefe yakınlık!
             });
 
-            // Arayüze Yazdır
             let html = "";
             racers.forEach((r, idx) => {
                 let color = r.isMe ? "gold" : (r.isBot ? "#aaa" : "#00ffcc");
@@ -512,7 +671,7 @@
                 bots.forEach(bot => bot.update());
                 
                 checkRaceProgress();
-                updateLeaderboard(); // Sıralamayı her frame güncelle
+                updateLeaderboard(); 
 
                 document.getElementById('speed-display').innerText = Math.abs(Math.floor(player.speed * 11));
 
@@ -634,24 +793,67 @@
             requestAnimationFrame(gameLoop);
         }
 
-        function enterGame() {
-            document.getElementById('lobby-screen').style.display = 'none';
-            document.getElementById('ui').style.display = 'block';
-            gameState = 'freeroam';
+        // --- AĞ YÖNETİMİ ---
+        function sendTargetedNetworkData(payload) {
+            // Eğer host isek, hedef belliyse sadece ona, değilse herkese gönder
+            if (isHost) {
+                if(payload.targetId && connections[payload.targetId] && connections[payload.targetId].open) {
+                    connections[payload.targetId].send(payload);
+                } else if (!payload.targetId) {
+                    Object.values(connections).forEach(c => { if(c.open) c.send(payload); });
+                }
+            } 
+            // İstemci isek hosta yolla, o halletsin
+            else if (hostConnection && hostConnection.open) {
+                hostConnection.send(payload);
+            }
         }
 
-        function playOffline() {
-            enterGame();
+        function handleNetworkData(data, senderId) {
+            // İstemcinin host üzerinden başkasına iletmek istediği bir veri ise (Yönlendirme)
+            if (isHost && data.targetId && data.targetId !== myId) {
+                if (connections[data.targetId] && connections[data.targetId].open) connections[data.targetId].send(data);
+                return;
+            }
+
+            if (data.type === 'UPDATE') {
+                otherPlayers[data.id] = data.playerInfo;
+                if (isHost) {
+                    Object.values(connections).forEach(c => { if (c.open && c.peer !== data.id && c.peer !== senderId) c.send(data); });
+                }
+            } 
+            else if (data.type === 'RACE_INVITE' && data.targetId === myId) {
+                document.getElementById('invite-popup').style.display = 'block';
+                document.getElementById('invite-text').innerText = `${data.senderName} seni yarışa davet ediyor!`;
+                currentInviterId = data.senderId;
+            }
+            else if (data.type === 'RACE_ACCEPT' && data.targetId === myId) {
+                if(!acceptedPlayers.includes(data.senderId)) {
+                    acceptedPlayers.push(data.senderId);
+                    updateAcceptedUI();
+                }
+            }
+            else if (data.type === 'RACE_START') {
+                if (!player.inRace) startRaceLogic(data.starter, true, data.route, data.acceptedPlayers);
+                if (isHost) {
+                    Object.values(connections).forEach(c => { if (c.open && c.peer !== senderId) c.send(data); });
+                }
+            }
+            else if (data.type === 'RACE_FINISHED') {
+                if (player.inRace) endRace("KAYBETTİN!\n" + data.winnerName.toUpperCase() + " KAZANDI", "red");
+                if (isHost) {
+                    Object.values(connections).forEach(c => { if (c.open && c.peer !== senderId) c.send(data); });
+                }
+            }
         }
+
+        function enterGame() { document.getElementById('lobby-screen').style.display = 'none'; document.getElementById('ui').style.display = 'block'; gameState = 'freeroam'; }
+        function playOffline() { enterGame(); }
 
         function saveName() {
             let input = document.getElementById('player-name-input').value.trim();
-            if(input.length > 0) {
-                playerName = input;
-                document.getElementById('name-screen').style.display = 'none';
-                document.getElementById('menu-screen').style.display = 'flex';
-                loadCarMenu();
-            } else alert("Lütfen bir isim girin!");
+            if(input.length > 0) { playerName = input; document.getElementById('name-screen').style.display = 'none'; document.getElementById('menu-screen').style.display = 'flex'; loadCarMenu(); } 
+            else alert("Lütfen bir isim girin!");
         }
 
         function loadCarMenu() {
@@ -659,37 +861,9 @@
             carImagesNames.forEach(imgName => {
                 const card = document.createElement('div'); card.className = 'car-card';
                 card.innerHTML = `<img src="${imgName}" alt="Araba"><br/><span style="color:#fff">${imgName.split('.')[0].toUpperCase()}</span>`;
-                card.onclick = () => {
-                    player.img = imgName;
-                    document.getElementById('menu-screen').style.display = 'none';
-                    document.getElementById('lobby-screen').style.display = 'flex';
-                    gameState = 'lobby';
-                };
+                card.onclick = () => { player.img = imgName; document.getElementById('menu-screen').style.display = 'none'; document.getElementById('lobby-screen').style.display = 'flex'; gameState = 'lobby'; };
                 carListDiv.appendChild(card);
             });
-        }
-
-        function handleNetworkData(data, senderId) {
-            if (data.type === 'UPDATE') {
-                let pId = data.id; 
-                otherPlayers[pId] = data.playerInfo;
-                
-                if (isHost) {
-                    Object.values(connections).forEach(c => {
-                        if (c.open && c.peer !== pId && c.peer !== senderId) {
-                            c.send(data);
-                        }
-                    });
-                }
-            } else if (data.type === 'RACE_START') {
-                if (!player.inRace) startRaceLogic(data.starter, true, data.route);
-                
-                if (isHost) {
-                    Object.values(connections).forEach(c => {
-                        if (c.open && c.peer !== senderId) c.send(data);
-                    });
-                }
-            }
         }
 
         function startHost() {
@@ -697,12 +871,9 @@
             peer = new Peer(); 
             peer.on('open', id => {
                 myId = id; isHost = true;
-                
                 document.getElementById('my-code').innerText = id;
                 document.getElementById('host-status').innerText = "Oda açıldı! Kodu kopyala ve arkadaşlarına gönder.";
-                
                 document.getElementById('start-game-btn').style.display = 'inline-block';
-                
                 document.getElementById('ui-room-code').style.display = 'inline';
                 document.getElementById('ui-room-code').innerText = "Oda Kodun: " + id;
             });
@@ -717,7 +888,6 @@
             let code = document.getElementById('join-code-input').value.trim();
             if(!code) return alert("Lütfen bir kod girin!");
             document.getElementById('join-status').innerText = "Bağlanılıyor...";
-            
             peer = new Peer();
             peer.on('open', id => {
                 myId = id; isHost = false;
@@ -725,7 +895,6 @@
                 hostConnection.on('open', () => {
                     document.getElementById('ui-room-code').style.display = 'inline';
                     document.getElementById('ui-room-code').innerText = "Bağlı Olunan Oda: " + code;
-                    
                     enterGame(); 
                 });
                 hostConnection.on('data', data => handleNetworkData(data, hostConnection.peer));
